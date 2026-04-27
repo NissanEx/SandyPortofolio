@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sandy Wiraabdy – Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- SCROLL HINT -->
+  <div class="scroll-hint" id="scrollHint">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+    scroll
+  </div>
+
+  <!-- ═══ HALAMAN 1 – HERO + PORTOFOLIO ═══ -->
+  <section class="hero" id="sec-hero">
+    <div class="container">
+
+      <h1>Sandy Wiraabdy</h1>
+
+      <!-- About row -->
+      <div class="hero-body">
+        <img class="hero-photo"
+          src="img/Screenshot from 2026-04-28 04-32-44.png"
+          alt="Sandy Wiraabdy" />
+        <div class="hero-about">
+          <strong>About</strong>
+          <p>
+            Society watches, quietly suffocating under the weight of favoritism dressed as destiny.
+            It isn't merit that opens doors—but bloodlines, connections, whispers exchanged behind velvet curtains.
+            How amusing, really… that people still pretend effort matters, when the game was rigged long before they were born.
+            <br><br>
+            There's a peculiar kind of despair in realizing that no matter how hard one struggles,
+            someone else is handed victory simply for existing in the "right" circle.
+            And yet, the world continues spinning, as if this quiet injustice is nothing more than a trivial inconvenience.
+            Perhaps that's the cruelest part—not the nepotism itself, but how easily it is accepted, normalized… forgotten.
+          </p>
+        </div>
+      </div>
+
+      <!-- Portofolio + Masuk (masih di halaman 1) -->
+      <div class="portfolio-block">
+        <h2>Portofolio</h2>
+        <button class="btn-dark" id="btnMasuk">Masuk</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ HALAMAN 2 – INFORMATION ═══ -->
+  <section class="info-section" id="sec-info">
+    <div class="container">
+      <div class="info-header">
+        <h2>Information</h2>
+        <button class="btn-contact" id="btnContact">Contact</button>
+      </div>
+      <div class="cards-wrapper">
+
+        <div class="article-card">
+          <img src="img/_.jpeg" alt="Joan of Arc" />
+          <div class="article-text">
+            <h3>Joan of Arc</h3>
+            <p>was a legendary French warrior and national hero who led armies in the 15th century.
+            Born a peasant girl, she led the French army against the English during the Hundred Years' War
+            at a young age (16–18). She was recognized for her bravery, particularly at the Battle of Orleans,
+            before her tragic end.</p>
+          </div>
+        </div>
+
+        <div class="article-card">
+          <img src="img/Know Yourself (Socrates).jpeg" alt="Greek philosophers" />
+          <div class="article-text">
+            <h3>The most prominent tragedy of Greek philosophers</h3>
+            <p>Was the execution of Socrates in 399 BC for corrupting the youth and denying the city's gods.
+            He chose to drink poison hemlock rather than renounce his philosophical beliefs.
+            Other tragedies include the brutal murder of Hypatia in Alexandria and other tragic lives in Greek history.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HALAMAN 3 – CONTACT ═══ -->
+  <section class="contact-section" id="contactSection">
+    <div class="container">
+      <div class="contact-heading">
+        <h2>Contact</h2>
+        <p class="contact-sub">if you have a questions</p>
+      </div>
+
+      <div class="contact-inner">
+        <div class="social-icons">
+          <!-- Instagram -->
+          <svg class="social-icon-wrap" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="44" height="44" rx="12" fill="url(#ig)"/>
+            <defs>
+              <radialGradient id="ig" cx="30%" cy="107%" r="130%">
+                <stop offset="0%" stop-color="#fdf497"/>
+                <stop offset="20%" stop-color="#fd5949"/>
+                <stop offset="50%" stop-color="#d6249f"/>
+                <stop offset="80%" stop-color="#285AEB"/>
+              </radialGradient>
+            </defs>
+            <rect x="11" y="11" width="22" height="22" rx="6" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="22" cy="22" r="5" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="28.5" cy="15.5" r="1.3" fill="white"/>
+          </svg>
+          <!-- WhatsApp -->
+          <svg class="social-icon-wrap" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="22" cy="22" r="22" fill="#25D366"/>
+            <path d="M22 11C16.477 11 12 15.477 12 21c0 1.9.538 3.67 1.469 5.172L12 33l7.02-1.438A10 10 0 0022 32c5.523 0 10-4.477 10-10S27.523 11 22 11z" stroke="white" stroke-width="2" fill="none"/>
+            <path d="M18 19s-.5-1 .5-2.5c.3-.4.8-.5 1.1-.3l1.5 1.5c.2.2.2.6 0 .8l-.7.7s1 2 3.4 3.4l.7-.7c.2-.2.6-.2.8 0l1.5 1.5c.2.3.1.8-.3 1.1C24.5 26 23.5 26 23.5 26S20 25 18 19z" fill="white"/>
+          </svg>
+          <!-- Facebook -->
+          <svg class="social-icon-wrap" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="22" cy="22" r="22" fill="#1877F2"/>
+            <path d="M25 14h-2a4 4 0 00-4 4v2h-2v3h2v9h3v-9h2.5l.5-3H22v-2a1 1 0 011-1h2v-3z" fill="white"/>
+          </svg>
+        </div>
+
+        <div class="contact-form">
+          <div class="textarea-wrapper">
+            <div class="prompt-row">
+              <span class="caret">›</span>
+              <span>Text</span>
+            </div>
+            <textarea id="messageInput" placeholder=""></textarea>
+          </div>
+          <div class="contact-form-footer">
+            <button class="btn-send" id="btnSend">send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
