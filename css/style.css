@@ -1,3 +1,21 @@
+/* ── SITE HEADER ── */
+.site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 22px 32px;
+  pointer-events: none;
+}
+
+.site-logo {
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  letter-spacing: 0.01em;
+}
+
 /* ── RESET & BASE ── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -41,15 +59,15 @@ section {
 }
 
 /* ════════════════════════════════════
-   HALAMAN 1 – HERO + PORTOFOLIO
+   HALAMAN 1 – HERO
 ════════════════════════════════════ */
-.hero { background: #fff; }
+.hero { background: #fff; position: relative; }
 
-.hero .container { gap: 30px; }
+.hero .container { gap: 28px; }
 
 .hero h1 {
   font-size: 4.2rem;
-  font-weight: 700;
+  font-weight: 400;          /* tidak bold */
   letter-spacing: -1px;
   text-align: center;
   line-height: 1;
@@ -78,29 +96,20 @@ section {
   gap: 10px;
 }
 
-.hero-about strong {
+.about-label {
   font-size: 1rem;
   font-weight: 700;
 }
 
 .hero-about p {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1.82;
   color: #333;
 }
 
-.portfolio-block {
+.hero-cta {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-}
-
-.portfolio-block h2 {
-  font-size: 3.8rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  line-height: 1;
+  justify-content: center;
 }
 
 .btn-dark {
@@ -134,8 +143,8 @@ section {
 .info-section .container {
   gap: 0;
   justify-content: flex-start;
-  padding-top: 64px;
-  padding-bottom: 64px;
+  padding-top: 60px;
+  padding-bottom: 60px;
   height: 100%;
 }
 
@@ -143,12 +152,12 @@ section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 52px;
+  margin-bottom: 44px;
 }
 
 .info-header h2 {
   font-size: 3.4rem;
-  font-weight: 700;
+  font-weight: 400;          /* tidak bold */
   border-left: 7px solid #111;
   padding-left: 20px;
   line-height: 1.05;
@@ -177,26 +186,40 @@ section {
   flex-direction: column;
   flex: 1;
   gap: 0;
-  justify-content: space-between;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+  padding-right: 6px;
+}
+
+.cards-wrapper::-webkit-scrollbar {
+  width: 4px;
+}
+.cards-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cards-wrapper::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
 }
 
 .article-card {
   display: flex;
-  gap: 36px;
+  gap: 28px;
   align-items: center;
-  flex: 1;
-  padding: 24px 0;
+  padding: 16px 0;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .article-card img {
-  width: 130px;
-  min-width: 130px;
-  height: 190px;
+  width: 110px;
+  min-width: 110px;
+  height: 148px;
   object-fit: cover;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.13);
   align-self: center;
 }
 
@@ -205,7 +228,7 @@ section {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .article-text h3 {
@@ -215,7 +238,7 @@ section {
 }
 
 .article-text p {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   line-height: 1.85;
   color: #333;
 }
@@ -231,18 +254,18 @@ section {
 .contact-section .container {
   gap: 0;
   justify-content: flex-start;
-  padding-top: 64px;
-  padding-bottom: 64px;
+  padding-top: 60px;
+  padding-bottom: 60px;
   height: 100%;
 }
 
 .contact-heading {
-  margin-bottom: 44px;
+  margin-bottom: 36px;
 }
 
 .contact-heading h2 {
   font-size: 3.4rem;
-  font-weight: 700;
+  font-weight: 400;          /* tidak bold */
   border-left: 7px solid #111;
   padding-left: 20px;
   line-height: 1.05;
@@ -263,7 +286,6 @@ section {
   min-height: 0;
 }
 
-/* Social icons mengisi tinggi sisa */
 .social-icons {
   display: flex;
   flex-direction: column;
@@ -284,7 +306,6 @@ section {
   opacity: 0.85;
 }
 
-/* Form mengisi semua sisa tinggi */
 .contact-form {
   flex: 1;
   display: flex;
@@ -433,4 +454,149 @@ section {
 .dot.active {
   background: #111;
   transform: scale(1.3);
+}
+
+/* ════════════════════════════════════
+   MOBILE – COMPACT LAYOUT
+════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Kurangi padding container */
+  .container {
+    padding: 0 20px;
+  }
+
+  /* ── HERO ── */
+  .hero .container { gap: 18px; }
+
+  .hero h1 {
+    font-size: 2.4rem;
+    letter-spacing: -0.5px;
+  }
+
+  .hero-body {
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .hero-photo {
+    width: 140px;
+    min-width: 140px;
+    height: 165px;
+  }
+
+  .hero-about p {
+    font-size: 0.8rem;
+    line-height: 1.7;
+  }
+
+  /* Potong teks panjang di mobile – tampilkan 4 baris saja */
+  .hero-about p {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .btn-dark {
+    padding: 12px 40px;
+    font-size: 0.9rem;
+  }
+
+  /* ── INFORMATION ── */
+  .info-section .container {
+    padding-top: 36px;
+    padding-bottom: 36px;
+  }
+
+  .info-header {
+    margin-bottom: 24px;
+  }
+
+  .info-header h2 {
+    font-size: 2rem;
+    border-left-width: 5px;
+    padding-left: 14px;
+  }
+
+  .btn-contact {
+    padding: 10px 22px;
+    font-size: 0.85rem;
+  }
+
+  .article-card {
+    gap: 14px;
+    padding: 10px 0;
+  }
+
+  .article-card img {
+    width: 72px;
+    min-width: 72px;
+    height: 105px;
+    border-radius: 7px;
+  }
+
+  .article-text h3 {
+    font-size: 0.88rem;
+  }
+
+  .article-text p {
+    font-size: 0.76rem;
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── CONTACT ── */
+  .contact-section .container {
+    padding-top: 36px;
+    padding-bottom: 36px;
+  }
+
+  .contact-heading {
+    margin-bottom: 20px;
+  }
+
+  .contact-heading h2 {
+    font-size: 2rem;
+    border-left-width: 5px;
+    padding-left: 14px;
+  }
+
+  .contact-sub {
+    padding-left: 20px;
+    font-size: 0.8rem;
+  }
+
+  .contact-inner {
+    gap: 20px;
+    flex-direction: row; /* tetap row tapi lebih compact */
+  }
+
+  .social-icons {
+    gap: 14px;
+  }
+
+  .social-icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+
+  .textarea-wrapper {
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+
+  .btn-send {
+    padding: 11px 36px;
+    font-size: 0.88rem;
+  }
+
+  /* Page dots – geser ke kanan lebih dekat */
+  .page-dots {
+    right: 10px;
+  }
 }
