@@ -77,17 +77,48 @@
     <main class="flex-1 lg:ml-64 p-4 md:p-8">
         
         <!-- HEADER / SEARCH BAR -->
-        <header class="flex items-center gap-4 mb-8">
-            <button onclick="toggleSidebar()" class="lg:hidden p-2 text-black focus:outline-none">
-                <i class="fas fa-bars text-2xl"></i>
-            </button>
-            <div class="flex-1">
+        <header class="mb-8">
+            <!-- Mobile Header Compact -->
+            <div class="lg:hidden flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="p-2 text-black focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                    <span class="text-lg font-bold tracking-tighter">Nissan Ex</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleSearchBar()" class="p-2 text-black focus:outline-none hover:bg-gray-200 rounded-lg transition">
+                        <i class="fas fa-search text-xl"></i>
+                    </button>
+                    <button onclick="navigateTo('profil')" class="p-2 text-black focus:outline-none hover:bg-gray-200 rounded-lg transition">
+                        <i class="fas fa-user-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Bar Mobile (Hidden by default) -->
+            <div id="mobile-search" class="lg:hidden hidden mb-4">
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
                         <i class="fas fa-search"></i>
                     </span>
-                    <input type="text" placeholder="Cari konten atau kategori..." class="w-full bg-[#000000] text-white py-3.5 pl-12 pr-4 rounded-2xl focus:ring-2 focus:ring-gray-700 outline-none transition shadow-lg placeholder:text-gray-500">
+                    <input type="text" placeholder="Cari konten atau kategori..." class="w-full bg-[#000000] text-white py-3.5 pl-12 pr-4 rounded-2xl focus:ring-2 focus:ring-gray-700 outline-none transition shadow-lg placeholder:text-gray-500" autofocus>
                 </div>
+            </div>
+
+            <!-- Desktop Header -->
+            <div class="hidden lg:flex items-center gap-4">
+                <div class="flex-1">
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" placeholder="Cari konten atau kategori..." class="w-full bg-[#000000] text-white py-3.5 pl-12 pr-4 rounded-2xl focus:ring-2 focus:ring-gray-700 outline-none transition shadow-lg placeholder:text-gray-500">
+                    </div>
+                </div>
+                <button onclick="navigateTo('profil')" class="p-3 text-black hover:bg-gray-200 rounded-lg transition">
+                    <i class="fas fa-user-circle text-2xl"></i>
+                </button>
             </div>
         </header>
 
@@ -162,7 +193,7 @@
         <div id="page-diskusi" class="page-content">
             <section class="mb-12">
                 <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-3xl font-bold text-black tracking-tight italic">Diskusi Hangat</h2>
+                    <h2 class="text-3xl font-bold text-black tracking-tight">Diskusi Hangat</h2>
                     <button class="text-sm text-black border-b border-black font-bold pb-1 uppercase tracking-widest">Semua Utas</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-6 md:p-10 space-y-8">
@@ -174,7 +205,7 @@
                                 <h4 class="font-bold text-black text-lg">Andi Setiawan</h4>
                                 <span class="text-xs text-gray-400 font-sans uppercase">2H ago</span>
                             </div>
-                            <p class="text-gray-600 mt-2 leading-relaxed italic">"Bagaimana pendapat kalian tentang update teknologi terbaru tahun ini?"</p>
+                            <p class="text-gray-600 mt-2 leading-relaxed">"Bagaimana pendapat kalian tentang update teknologi terbaru tahun ini?"</p>
                         </div>
                     </div>
                     <!-- Input -->
@@ -200,8 +231,404 @@
             <p class="text-gray-500">Belum ada konten yang Anda simpan.</p>
         </div>
         <div id="page-pengaturan" class="page-content">
-            <h2 class="text-3xl font-bold mb-6">Pengaturan Akun</h2>
-            <p class="text-gray-500">Kelola profil dan preferensi aplikasi Anda.</p>
+            <!-- DEPLOY & UPLOAD SECTION -->
+            <div class="grid md:grid-cols-2 gap-6">
+                
+                <!-- DEPLOY PROJECT ANALYST -->
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-rocket text-2xl text-black"></i>
+                        <h2 class="text-2xl font-bold text-black tracking-tight">Deploy Project</h2>
+                    </div>
+                    
+                    <div class="space-y-5">
+                        <!-- Recent Deployments -->
+                        <div>
+                            <h3 class="text-lg font-bold text-black mb-4">Proyek Terbaru</h3>
+                            <div class="space-y-3">
+                                <!-- Deploy Item 1 -->
+                                <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div>
+                                            <p class="font-bold text-black">OYBook Platform</p>
+                                            <p class="text-sm text-gray-600">Web Novel Platform</p>
+                                        </div>
+                                        <span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold">✓ Live</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-3">Diupdate 2 hari lalu</p>
+                                    <div class="flex gap-2">
+                                        <button class="text-xs bg-black text-white px-3 py-1 rounded-lg hover:bg-zinc-800 transition font-bold">Deploy Ulang</button>
+                                        <button class="text-xs border border-black text-black px-3 py-1 rounded-lg hover:bg-gray-50 transition font-bold">Analisis</button>
+                                    </div>
+                                </div>
+
+                                <!-- Deploy Item 2 -->
+                                <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div>
+                                            <p class="font-bold text-black">Portfolio Website</p>
+                                            <p class="text-sm text-gray-600">Dark Luxury Design</p>
+                                        </div>
+                                        <span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold">✓ Live</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-3">Diupdate 1 minggu lalu</p>
+                                    <div class="flex gap-2">
+                                        <button class="text-xs bg-black text-white px-3 py-1 rounded-lg hover:bg-zinc-800 transition font-bold">Deploy Ulang</button>
+                                        <button class="text-xs border border-black text-black px-3 py-1 rounded-lg hover:bg-gray-50 transition font-bold">Analisis</button>
+                                    </div>
+                                </div>
+
+                                <!-- Deploy Item 3 -->
+                                <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div>
+                                            <p class="font-bold text-black">Rangership Game</p>
+                                            <p class="text-sm text-gray-600">Space Flight Simulator</p>
+                                        </div>
+                                        <span class="text-xs bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-bold">⏳ Dev</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-3">Sedang dikerjakan</p>
+                                    <div class="flex gap-2">
+                                        <button class="text-xs bg-black text-white px-3 py-1 rounded-lg hover:bg-zinc-800 transition font-bold">Deploy</button>
+                                        <button class="text-xs border border-black text-black px-3 py-1 rounded-lg hover:bg-gray-50 transition font-bold">Analisis</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deploy Analytics -->
+                        <div class="border-t border-gray-200 pt-5">
+                            <h3 class="text-lg font-bold text-black mb-4">Analytics</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                    <p class="text-2xl font-bold text-black">1,245</p>
+                                    <p class="text-xs text-gray-600">Total Visits</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                    <p class="text-2xl font-bold text-black">89%</p>
+                                    <p class="text-xs text-gray-600">Uptime</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UPLOAD KONTEN -->
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-black"></i>
+                        <h2 class="text-2xl font-bold text-black tracking-tight">Upload Konten</h2>
+                    </div>
+
+                    <div class="space-y-5">
+                        <!-- Upload Area -->
+                        <div class="border-2 border-dashed border-black rounded-[1.5rem] p-8 text-center hover:bg-gray-50 transition cursor-pointer">
+                            <i class="fas fa-file-upload text-4xl text-gray-400 mb-3"></i>
+                            <p class="font-bold text-black mb-1">Drag & drop konten Anda di sini</p>
+                            <p class="text-sm text-gray-500 mb-4">atau klik untuk memilih file</p>
+                            <button class="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-zinc-800 transition">
+                                Pilih File
+                            </button>
+                        </div>
+
+                        <!-- Recent Uploads -->
+                        <div>
+                            <h3 class="text-lg font-bold text-black mb-4">Upload Terbaru</h3>
+                            <div class="space-y-3">
+                                <!-- Upload Item 1 -->
+                                <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start gap-3 flex-1">
+                                            <i class="fas fa-image text-black text-lg mt-1"></i>
+                                            <div>
+                                                <p class="font-bold text-black text-sm">cover-image.png</p>
+                                                <p class="text-xs text-gray-500">2.4 MB • 3 hari lalu</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-lg font-bold">100%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Upload Item 2 -->
+                                <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start gap-3 flex-1">
+                                            <i class="fas fa-file-pdf text-red-600 text-lg mt-1"></i>
+                                            <div>
+                                                <p class="font-bold text-black text-sm">thesis-documentation.pdf</p>
+                                                <p class="text-xs text-gray-500">5.8 MB • 1 minggu lalu</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-lg font-bold">100%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Upload Item 3 -->
+                                <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start gap-3 flex-1">
+                                            <i class="fas fa-video text-purple-600 text-lg mt-1"></i>
+                                            <div>
+                                                <p class="font-bold text-black text-sm">tutorial-godot.mp4</p>
+                                                <p class="text-xs text-gray-500">125 MB • 2 minggu lalu</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-lg font-bold">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Storage Info -->
+                        <div class="border-t border-gray-200 pt-5">
+                            <p class="text-sm text-gray-600 mb-3">Ruang Penyimpanan: <span class="font-bold text-black">2.4 GB / 5 GB</span></p>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-black h-2 rounded-full" style="width: 48%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div id="page-profil" class="page-content">
+            <!-- COVER PHOTO & PROFILE SECTION -->
+            <div class="mb-8">
+                <!-- Cover Photo -->
+                <div class="relative w-full h-48 md:h-64 bg-gradient-to-r from-zinc-900 to-zinc-800 rounded-[2rem] shadow-lg overflow-hidden">
+                    <button class="absolute top-4 right-4 bg-black/70 hover:bg-black text-white px-4 py-2 rounded-lg transition flex items-center gap-2">
+                        <i class="fas fa-camera"></i>
+                        <span class="text-sm font-bold">Ubah Cover</span>
+                    </button>
+                </div>
+
+                <!-- Profile Info Card -->
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 mx-4 md:mx-0 -mt-20 relative z-10 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-end">
+                        <!-- Profile Picture -->
+                        <div class="relative -mt-32 md:-mt-24">
+                            <div class="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] bg-gradient-to-br from-zinc-700 to-black shadow-xl flex items-center justify-center text-white text-6xl font-bold border-4 border-white">
+                                S
+                            </div>
+                            <button class="absolute bottom-2 right-2 bg-black text-white p-3 rounded-lg hover:bg-zinc-800 transition shadow-lg">
+                                <i class="fas fa-camera text-sm"></i>
+                            </button>
+                        </div>
+
+                        <!-- Profile Details -->
+                        <div class="flex-1 pb-4">
+                            <h1 class="text-3xl md:text-4xl font-bold text-black mb-2 tracking-tight">San Pelong</h1>
+                            <p class="text-gray-500 text-lg mb-1">@sanpelong</p>
+                            <p class="text-gray-600 mb-4">Teknik Informatika Student | Game Dev Enthusiast | Web Developer</p>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-zinc-800 transition flex items-center gap-2">
+                                    <i class="fas fa-user-check"></i>
+                                    <span>Ikuti</span>
+                                </button>
+                                <button class="border-2 border-black text-black px-6 py-2 rounded-lg font-bold hover:bg-gray-50 transition flex items-center gap-2">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATS SECTION -->
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-8">
+                <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition">
+                    <div class="text-2xl md:text-3xl font-bold text-black mb-1">125</div>
+                    <p class="text-sm text-gray-500">Pengikut</p>
+                </div>
+                <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition">
+                    <div class="text-2xl md:text-3xl font-bold text-black mb-1">48</div>
+                    <p class="text-sm text-gray-500">Mengikuti</p>
+                </div>
+                <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition">
+                    <div class="text-2xl md:text-3xl font-bold text-black mb-1">23</div>
+                    <p class="text-sm text-gray-500">Postingan</p>
+                </div>
+                <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition">
+                    <div class="text-2xl md:text-3xl font-bold text-black mb-1">567</div>
+                    <p class="text-sm text-gray-500">Suka</p>
+                </div>
+                <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition">
+                    <div class="text-2xl md:text-3xl font-bold text-black mb-1">89</div>
+                    <p class="text-sm text-gray-500">Komentar</p>
+                </div>
+                <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition">
+                    <div class="text-2xl md:text-3xl font-bold text-black mb-1">34</div>
+                    <p class="text-sm text-gray-500">Bagikan</p>
+                </div>
+            </div>
+
+            <!-- ABOUT SECTION -->
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <!-- About Info -->
+                <div class="md:col-span-2 bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-8">
+                    <h2 class="text-2xl font-bold text-black mb-6 tracking-tight">Tentang Saya</h2>
+                    
+                    <div class="space-y-5 text-gray-700">
+                        <div class="flex items-start gap-4">
+                            <i class="fas fa-map-marker-alt text-black text-lg mt-1 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-bold text-black">Lokasi</p>
+                                <p>Bekasi, Indonesia</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <i class="fas fa-briefcase text-black text-lg mt-1 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-bold text-black">Pekerjaan</p>
+                                <p>Teknik Informatika Student</p>
+                                <p class="text-sm">Game Developer & Web Developer</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <i class="fas fa-graduation-cap text-black text-lg mt-1 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-bold text-black">Pendidikan</p>
+                                <p>Institut Teknologi</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <i class="fas fa-heart text-black text-lg mt-1 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-bold text-black">Minat</p>
+                                <p>Game Development, Web Development, Creative Writing, Islamic Content</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <i class="fas fa-code text-black text-lg mt-1 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-bold text-black">Tech Stack</p>
+                                <p>HTML/CSS/JS, Godot 4, Python, Blender, Supabase, Three.js</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-6">
+                    <h3 class="text-xl font-bold text-black mb-6 tracking-tight">Aksi Cepat</h3>
+                    
+                    <div class="space-y-3">
+                        <button class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition border border-gray-200">
+                            <i class="fas fa-edit text-black text-lg"></i>
+                            <span class="font-bold text-black">Edit Profil</span>
+                        </button>
+                        
+                        <button class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition border border-gray-200">
+                            <i class="fas fa-cog text-black text-lg"></i>
+                            <span class="font-bold text-black">Pengaturan</span>
+                        </button>
+
+                        <button class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition border border-gray-200">
+                            <i class="fas fa-bell text-black text-lg"></i>
+                            <span class="font-bold text-black">Notifikasi</span>
+                        </button>
+
+                        <button class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition border border-gray-200">
+                            <i class="fas fa-shield-alt text-black text-lg"></i>
+                            <span class="font-bold text-black">Keamanan</span>
+                        </button>
+
+                        <button class="w-full flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition border border-gray-200">
+                            <i class="fas fa-sign-out-alt text-black text-lg"></i>
+                            <span class="font-bold text-black">Keluar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POSTS SECTION -->
+            <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-8">
+                <h2 class="text-2xl font-bold text-black mb-8 tracking-tight">Aktivitas Terbaru</h2>
+                
+                <div class="space-y-6">
+                    <!-- Post Item -->
+                    <div class="border-b border-gray-200 pb-6 last:border-b-0">
+                        <div class="flex gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-zinc-700 to-black flex items-center justify-center text-white font-bold flex-shrink-0">S</div>
+                            <div class="flex-1">
+                                <p class="font-bold text-black">San Pelong</p>
+                                <p class="text-sm text-gray-500">2 hari yang lalu</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4 leading-relaxed">Baru saja menyelesaikan optimasi 3D asset pipeline dari Blender ke Godot 4 menggunakan GDScript. Hasilnya sangat memuaskan! 🚀</p>
+                        <div class="flex gap-4 text-sm text-gray-600">
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-heart"></i>
+                                <span>125 Suka</span>
+                            </button>
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-comment"></i>
+                                <span>23 Komentar</span>
+                            </button>
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-share"></i>
+                                <span>12 Bagikan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Post Item -->
+                    <div class="border-b border-gray-200 pb-6 last:border-b-0">
+                        <div class="flex gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-zinc-700 to-black flex items-center justify-center text-white font-bold flex-shrink-0">S</div>
+                            <div class="flex-1">
+                                <p class="font-bold text-black">San Pelong</p>
+                                <p class="text-sm text-gray-500">5 hari yang lalu</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4 leading-relaxed">Launching OYBook (Open Your Book) platform! Platform web novel dengan fitur monetisasi, discussion room, dan AI chat terintegrasi. Lihat di vercel... 📖</p>
+                        <div class="flex gap-4 text-sm text-gray-600">
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-heart"></i>
+                                <span>89 Suka</span>
+                            </button>
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-comment"></i>
+                                <span>15 Komentar</span>
+                            </button>
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-share"></i>
+                                <span>8 Bagikan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Post Item -->
+                    <div class="pb-6">
+                        <div class="flex gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-zinc-700 to-black flex items-center justify-center text-white font-bold flex-shrink-0">S</div>
+                            <div class="flex-1">
+                                <p class="font-bold text-black">San Pelong</p>
+                                <p class="text-sm text-gray-500">1 minggu yang lalu</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4 leading-relaxed">Mengerjakan thesis tentang optimasi 3D asset pipeline. Banyak hal menarik yang dipelajari tentang workflow Blender-to-Godot 4! 💻</p>
+                        <div class="flex gap-4 text-sm text-gray-600">
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-heart"></i>
+                                <span>156 Suka</span>
+                            </button>
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-comment"></i>
+                                <span>34 Komentar</span>
+                            </button>
+                            <button class="flex items-center gap-2 hover:text-black transition">
+                                <i class="fas fa-share"></i>
+                                <span>18 Bagikan</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -215,6 +642,11 @@
             const overlay = document.getElementById('overlay');
             sidebar.classList.toggle('-translate-x-full');
             overlay.classList.toggle('hidden');
+        }
+
+        function toggleSearchBar() {
+            const searchBar = document.getElementById('mobile-search');
+            searchBar.classList.toggle('hidden');
         }
 
         function navigateTo(pageId) {
@@ -238,9 +670,13 @@
                 }
             });
 
-            // Tutup sidebar di mobile setelah klik
+            // Pastikan sidebar tertutup di mobile setelah klik
             if (window.innerWidth < 1024) {
-                toggleSidebar();
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('overlay');
+                // Pastikan sidebar dalam keadaan tertutup (-translate-x-full)
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
             }
             
             // Scroll ke atas otomatis
@@ -248,4 +684,4 @@
         }
     </script>
 </body>
-</html>s
+</html>
