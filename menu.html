@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Web Dinamis - Black Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+        body {
+            font-family: 'Lora', serif;
+            background-color: #f3f4f6;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #000000;
+            border-radius: 10px;
+        }
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#000000] text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold tracking-tighter">Nissan Ex</h1>
+        </div>
+        <nav class="mt-6 px-4 space-y-2">
+            <button onclick="navigateTo('beranda')" class="nav-link w-full flex items-center p-3 rounded-lg hover:bg-white/10 transition active">
+                <i class="fas fa-home w-6"></i>
+                <span class="ml-3">Beranda</span>
+            </button>
+            <button onclick="navigateTo('kategori')" class="nav-link w-full flex items-center p-3 rounded-lg hover:bg-white/10 transition">
+                <i class="fas fa-th-large w-6"></i>
+                <span class="ml-3">Kategori</span>
+            </button>
+            <button onclick="navigateTo('tren')" class="nav-link w-full flex items-center p-3 rounded-lg hover:bg-white/10 transition">
+                <i class="fas fa-chart-line w-6"></i>
+                <span class="ml-3">Tren</span>
+            </button>
+            <button onclick="navigateTo('disimpan')" class="nav-link w-full flex items-center p-3 rounded-lg hover:bg-white/10 transition">
+                <i class="fas fa-bookmark w-6"></i>
+                <span class="ml-3">Disimpan</span>
+            </button>
+            <button onclick="navigateTo('diskusi')" class="nav-link w-full flex items-center p-3 rounded-lg hover:bg-white/10 transition">
+                <i class="fas fa-comments w-6"></i>
+                <span class="ml-3">Diskusi</span>
+            </button>
+            <div class="pt-10 border-t border-white/10">
+                <button onclick="navigateTo('pengaturan')" class="nav-link w-full flex items-center p-3 rounded-lg hover:bg-white/10 transition text-gray-400">
+                    <i class="fas fa-cog w-6"></i>
+                    <span class="ml-3">Pengaturan</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 lg:ml-64 p-4 md:p-8">
+        
+        <!-- HEADER / SEARCH BAR -->
+        <header class="flex items-center gap-4 mb-8">
+            <button onclick="toggleSidebar()" class="lg:hidden p-2 text-black focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <div class="flex-1">
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" placeholder="Cari konten atau kategori..." class="w-full bg-[#000000] text-white py-3.5 pl-12 pr-4 rounded-2xl focus:ring-2 focus:ring-gray-700 outline-none transition shadow-lg placeholder:text-gray-500">
+                </div>
+            </div>
+        </header>
+
+        <!-- BERANDA PAGE -->
+        <div id="page-beranda" class="page-content active">
+            <!-- CATEGORIES SECTION -->
+            <section class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-8">
+                <div onclick="navigateTo('kategori')" class="aspect-square bg-[#000000] rounded-2xl shadow-lg hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2">
+                    <i class="fas fa-laptop text-xl mb-1 text-gray-300"></i>
+                    <span class="text-xs font-medium">Tekno</span>
+                </div>
+                <!-- ... kategori lainnya ... -->
+                <div onclick="navigateTo('kategori')" class="aspect-square bg-[#000000] rounded-2xl shadow-lg hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2">
+                    <i class="fas fa-gamepad text-xl mb-1 text-gray-300"></i>
+                    <span class="text-xs font-medium">Game</span>
+                </div>
+                <div onclick="navigateTo('kategori')" class="aspect-square bg-[#000000] rounded-2xl shadow-lg hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2">
+                    <i class="fas fa-music text-xl mb-1 text-gray-300"></i>
+                    <span class="text-xs font-medium">Musik</span>
+                </div>
+                <div onclick="navigateTo('kategori')" class="aspect-square bg-[#000000] rounded-2xl shadow-lg hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2">
+                    <i class="fas fa-film text-xl mb-1 text-gray-300"></i>
+                    <span class="text-xs font-medium">Film</span>
+                </div>
+                <div onclick="navigateTo('kategori')" class="aspect-square bg-[#000000] rounded-2xl shadow-lg hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2">
+                    <i class="fas fa-dumbbell text-xl mb-1 text-gray-300"></i>
+                    <span class="text-xs font-medium">Olahraga</span>
+                </div>
+                <div onclick="navigateTo('kategori')" class="aspect-square bg-[#000000] rounded-2xl shadow-lg hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2">
+                    <i class="fas fa-utensils text-xl mb-1 text-gray-300"></i>
+                    <span class="text-xs font-medium">Kuliner</span>
+                </div>
+            </section>
+
+            <!-- MAIN BANNER -->
+            <section class="mb-8">
+                <div class="relative w-full h-48 md:h-64 bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 flex items-center">
+                    <div class="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent z-10"></div>
+                    <div class="relative z-20 px-8 md:px-16">
+                        <h2 class="text-4xl font-bold text-black tracking-tight">Eksplorasi Dunia Baru</h2>
+                        <p class="text-gray-500 mt-3 max-w-sm font-light">Kurasi konten eksklusif untuk gaya hidup digital Anda hari ini.</p>
+                        <button class="mt-6 px-8 py-3 bg-[#000000] text-white rounded-full font-bold hover:bg-zinc-800 transition shadow-xl active:scale-95">Lihat Detail</button>
+                    </div>
+                    <div class="absolute right-0 top-0 h-full w-1/3 bg-[#000000] rounded-l-[5rem] hidden md:block"></div>
+                </div>
+            </section>
+
+            <!-- CONTENT GRID -->
+            <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <!-- Card Items Placeholder -->
+                <div class="flex flex-col gap-3 group cursor-pointer">
+                    <div class="aspect-[2/3] bg-[#000000] rounded-[2rem] shadow-xl group-hover:-translate-y-2 transition duration-500 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center">
+                            <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition text-4xl duration-500"></i>
+                        </div>
+                    </div>
+                    <div class="px-2">
+                        <div class="h-4 w-10/12 bg-zinc-300 rounded-full mb-2"></div>
+                        <div class="h-3 w-6/12 bg-zinc-200 rounded-full"></div>
+                    </div>
+                </div>
+                <!-- Duplicate for Visual -->
+                <div class="flex flex-col gap-3 group"><div class="aspect-[2/3] bg-[#000000] rounded-[2rem] shadow-xl"></div></div>
+                <div class="flex flex-col gap-3 group"><div class="aspect-[2/3] bg-[#000000] rounded-[2rem] shadow-xl"></div></div>
+                <div class="flex flex-col gap-3 group"><div class="aspect-[2/3] bg-[#000000] rounded-[2rem] shadow-xl"></div></div>
+                <div class="flex flex-col gap-3 group"><div class="aspect-[2/3] bg-[#000000] rounded-[2rem] shadow-xl"></div></div>
+                <div class="flex flex-col gap-3 group"><div class="aspect-[2/3] bg-[#000000] rounded-[2rem] shadow-xl"></div></div>
+            </section>
+        </div>
+
+        <!-- Halaman Diskusi (Pemisahan dari beranda) -->
+        <div id="page-diskusi" class="page-content">
+            <section class="mb-12">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-bold text-black tracking-tight italic">Diskusi Hangat</h2>
+                    <button class="text-sm text-black border-b border-black font-bold pb-1 uppercase tracking-widest">Semua Utas</button>
+                </div>
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-black/5 border border-gray-100 p-6 md:p-10 space-y-8">
+                    <!-- Diskusi Item -->
+                    <div class="flex gap-6">
+                        <div class="w-12 h-12 rounded-2xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0">A</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-black text-lg">Andi Setiawan</h4>
+                                <span class="text-xs text-gray-400 font-sans uppercase">2H ago</span>
+                            </div>
+                            <p class="text-gray-600 mt-2 leading-relaxed italic">"Bagaimana pendapat kalian tentang update teknologi terbaru tahun ini?"</p>
+                        </div>
+                    </div>
+                    <!-- Input -->
+                    <div class="mt-10 flex gap-4 items-center bg-gray-50 p-3 rounded-[1.5rem]">
+                        <input type="text" placeholder="Bagikan pemikiranmu..." class="flex-1 bg-transparent text-black py-2 px-2 outline-none">
+                        <button class="bg-black text-white w-10 h-10 rounded-xl flex items-center justify-center"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Placeholder Pages -->
+        <div id="page-kategori" class="page-content">
+            <h2 class="text-3xl font-bold mb-6">Pilih Kategori</h2>
+            <p class="text-gray-500">Halaman kategori sedang disiapkan...</p>
+        </div>
+        <div id="page-tren" class="page-content">
+            <h2 class="text-3xl font-bold mb-6">Trending Sekarang</h2>
+            <p class="text-gray-500">Konten populer akan muncul di sini.</p>
+        </div>
+        <div id="page-disimpan" class="page-content">
+            <h2 class="text-3xl font-bold mb-6">Koleksi Disimpan</h2>
+            <p class="text-gray-500">Belum ada konten yang Anda simpan.</p>
+        </div>
+        <div id="page-pengaturan" class="page-content">
+            <h2 class="text-3xl font-bold mb-6">Pengaturan Akun</h2>
+            <p class="text-gray-500">Kelola profil dan preferensi aplikasi Anda.</p>
+        </div>
+
+    </main>
+
+    <!-- MOBILE OVERLAY -->
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity"></div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function navigateTo(pageId) {
+            // Sembunyikan semua halaman
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => page.classList.remove('active'));
+
+            // Tampilkan halaman tujuan
+            const targetPage = document.getElementById('page-' + pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // Update status aktif di sidebar
+            const links = document.querySelectorAll('.nav-link');
+            links.forEach(link => {
+                link.classList.remove('active');
+                // Cek teks di dalam link untuk menentukan status aktif (sederhana)
+                if (link.textContent.toLowerCase().includes(pageId)) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Tutup sidebar di mobile setelah klik
+            if (window.innerWidth < 1024) {
+                toggleSidebar();
+            }
+            
+            // Scroll ke atas otomatis
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>s
