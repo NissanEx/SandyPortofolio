@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nissan Ex — Masuk</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: Georgia, serif; background: #f3f4f6; }
+  .brand-lora { font-family: 'Lora', serif; }
+  .form-input { width:100%; border:1.5px solid #e5e7eb; border-radius:10px; padding:10px 14px; font-family:Georgia,serif; font-size:14px; outline:none; transition:border .2s; }
+  .form-input:focus { border-color:#000; }
+  #toast { position:fixed; bottom:24px; right:24px; background:#111; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; z-index:999; opacity:0; transition:opacity .3s; pointer-events:none; }
+  #toast.show { opacity:1; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+<div class="w-full max-w-sm">
+  <!-- Logo -->
+  <div class="text-center mb-8">
+    <div class="w-12 h-12 bg-black rounded-2xl flex items-center justify-center mx-auto mb-3">
+      <span class="text-white font-bold text-2xl leading-none brand-lora">N</span>
+    </div>
+    <h1 class="text-2xl font-bold brand-lora">Nissan Ex</h1>
+    <p class="text-sm text-gray-500 mt-1">Platform Konten Digital</p>
+  </div>
+
+  <!-- Card -->
+  <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+    <!-- Tab -->
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
+      <button id="tab-masuk" onclick="setTab('masuk')" class="flex-1 py-2 rounded-lg text-sm font-bold bg-black text-white transition">Masuk</button>
+      <button id="tab-daftar" onclick="setTab('daftar')" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-500 transition">Daftar</button>
+    </div>
+
+    <!-- Form Masuk -->
+    <div id="panel-masuk">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
+          <input id="login-email" type="email" class="form-input" placeholder="email@contoh.com">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
+          <input id="login-pass" type="password" class="form-input" placeholder="••••••••">
+        </div>
+        <button onclick="doLogin()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
+          Masuk
+        </button>
+      </div>
+    </div>
+
+    <!-- Form Daftar -->
+    <div id="panel-daftar" class="hidden">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Username</label>
+          <input id="reg-username" type="text" class="form-input" placeholder="sanpelong">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
+          <input id="reg-email" type="email" class="form-input" placeholder="email@contoh.com">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
+          <input id="reg-pass" type="password" class="form-input" placeholder="Min. 6 karakter">
+        </div>
+        <button onclick="doRegister()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
+          Buat Akun
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-gray-400 mt-6">
+    Dengan masuk, kamu menyetujui syarat dan ketentuan Nissan Ex.
+  </p>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { signIn, signUp, getCurrentUser } from './supabase.js'
+
+  // Redirect jika sudah login
+  getCurrentUser().then(user => {
+    if (user) window.location.href = 'menu.html'
+  })
+
+  function toast(msg) {
+    const el = document.getElementById('toast')
+    el.textContent = msg
+    el.classList.add('show')
+    setTimeout(() => el.classList.remove('show'), 3000)
+  }
+
+  window.setTab = function(tab) {
+    document.getElementById('panel-masuk').classList.toggle('hidden', tab !== 'masuk')
+    document.getElementById('panel-daftar').classList.toggle('hidden', tab !== 'daftar')
+    document.getElementById('tab-masuk').className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${tab==='masuk' ? 'bg-black text-white' : 'text-gray-500'}`
+    document.getElementById('tab-daftar').className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${tab==='daftar' ? 'bg-black text-white' : 'text-gray-500'}`
+  }
+
+  window.doLogin = async function() {
+    const email = document.getElementById('login-email').value.trim()
+    const pass  = document.getElementById('login-pass').value
+    if (!email || !pass) { toast('⚠️ Email dan password wajib diisi'); return }
+    try {
+      toast('⏳ Sedang masuk...')
+      await signIn(email, pass)
+      toast('✅ Berhasil masuk!')
+      setTimeout(() => window.location.href = 'menu.html', 800)
+    } catch(e) {
+      toast('❌ ' + e.message)
+    }
+  }
+
+  window.doRegister = async function() {
+    const username = document.getElementById('reg-username').value.trim()
+    const email    = document.getElementById('reg-email').value.trim()
+    const pass     = document.getElementById('reg-pass').value
+    if (!username || !email || !pass) { toast('⚠️ Semua field wajib diisi'); return }
+    if (pass.length < 6) { toast('⚠️ Password minimal 6 karakter'); return }
+    try {
+      toast('⏳ Membuat akun...')
+      await signUp(email, pass, username)
+      toast('✅ Akun dibuat! Silakan masuk.')
+      setTimeout(() => window.setTab('masuk'), 1200)
+    } catch(e) {
+      toast('❌ ' + e.message)
+    }
+  }
+</script>
+</body>
+</html>

@@ -9,7 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
-  body { font-family: 'Lora', serif; background: #f3f4f6; }
+  body { font-family: Georgia, 'Times New Roman', serif; background: #f3f4f6; }
+  .brand-lora { font-family: 'Lora', serif; }
   .page-content { display: none; }
   .page-content.active { display: block; animation: fadeIn .35s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
@@ -69,7 +70,7 @@
   .badge-blue { background:#dbeafe; color:#1e40af; }
 
   /* Form */
-  .form-input { width:100%; border:1.5px solid #e5e7eb; border-radius:10px; padding:10px 14px; font-family:'Lora',serif; font-size:14px; outline:none; transition:border .2s; }
+  .form-input { width:100%; border:1.5px solid #e5e7eb; border-radius:10px; padding:10px 14px; font-family:Georgia,'Times New Roman',serif; font-size:14px; outline:none; transition:border .2s; }
   .form-input:focus { border-color:#000; }
   .form-label { font-size:12px; font-weight:700; color:#555; margin-bottom:5px; display:block; letter-spacing:.04em; text-transform:uppercase; }
 
@@ -102,7 +103,7 @@
     <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center">
       <span class="text-black font-bold text-lg leading-none">N</span>
     </div>
-    <h1 class="text-xl font-bold tracking-tight">Nissan Ex</h1>
+    <h1 class="text-xl font-bold tracking-tight brand-lora">Nissan Ex</h1>
   </div>
   <nav class="mt-2 px-4 space-y-1 flex-1">
     <button onclick="navigateTo('beranda')" data-page="beranda" class="nav-link active w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition gap-3 text-sm">
@@ -139,7 +140,7 @@
     <div class="lg:hidden flex items-center justify-between gap-4 mb-4">
       <div class="flex items-center gap-3">
         <button onclick="toggleSidebar()" class="p-2 text-black"><i class="fas fa-bars text-xl"></i></button>
-        <span class="text-lg font-bold">Nissan Ex</span>
+        <span class="text-lg font-bold brand-lora">Nissan Ex</span>
       </div>
       <div class="flex items-center gap-2">
         <button onclick="document.getElementById('mobile-search-bar').classList.toggle('hidden'); navigateTo('kategori'); setTimeout(()=>document.querySelector('#mobile-search-bar input').focus(),100);" class="p-2"><i class="fas fa-search text-xl"></i></button>
@@ -540,6 +541,16 @@
           <button onclick="clearMainFile()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-times"></i></button>
         </div>
       </div>
+
+      <!-- URL Sisipan (opsional) -->
+      <div>
+        <label class="form-label">Sisipkan URL Web <span class="text-gray-400 font-normal normal-case">(opsional)</span></label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-link text-sm"></i></span>
+          <input id="up-url" type="url" class="form-input pl-9" placeholder="https://contoh.com">
+        </div>
+        <p class="text-xs text-gray-400 mt-1">Tempel link website, artikel, atau referensi terkait konten ini.</p>
+      </div>
       <!-- Thumbnail / Icon upload -->
       <div>
         <label class="form-label">Thumbnail / Icon <span class="text-gray-400 font-normal normal-case">(opsional)</span></label>
@@ -743,62 +754,129 @@
   </div>
 </div>
 
-<script>
+<script type="module">
 // ============================
-// DATABASE (localStorage)
+// SUPABASE IMPORTS
+// ============================
+import {
+  supabase, getCurrentUser,
+  getProfile, updateProfile,
+  uploadAvatar as uploadAvatarFile, uploadCoverFile,
+  getCategories, addCategory,
+  getContents, addContent, updateContent, deleteContent,
+  uploadContentFile, uploadThumbnail,
+  getPosts, addPost,
+  getSaves, toggleSave,
+  addRef
+} from './supabase.js'
+
+// User yang sedang login (diisi saat init)
+let CURRENT_USER = null
+let CURRENT_PROFILE = null
+
+// ============================
+// GLOBAL CONSTANTS
+// ============================
+const fileIcons = {image:'fas fa-image',video:'fas fa-file-video',pdf:'fas fa-file-pdf',doc:'fas fa-file-word',docx:'fas fa-file-word'};
+
+// ============================
+// DATABASE (localStorage cache + Supabase)
 // ============================
 const DB = {
   get(key) { try { return JSON.parse(localStorage.getItem('nissanex_'+key)) || null; } catch(e){ return null; } },
   set(key, val) { localStorage.setItem('nissanex_'+key, JSON.stringify(val)); },
   getArr(key) { return this.get(key) || []; },
   pushArr(key, item) { const arr = this.getArr(key); arr.unshift(item); this.set(key, arr); return arr; },
-  uuid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); },
+  uuid() { return crypto.randomUUID(); },
+
+  async fetchCategories() {
+    const data = await getCategories(CURRENT_USER.id)
+    this.set('categories', data.map(c => ({
+      id: c.id, name: c.title, slug: c.title?.toLowerCase(),
+      icon: c.icon || 'fas fa-folder', iconUrl: c.file_url || ''
+    })))
+    return this.getArr('categories')
+  },
+
+  async fetchContents() {
+    const data = await getContents(CURRENT_USER.id)
+    const mapped = data.map(c => ({
+      id: c.id, userId: c.user_id, categoryId: c.category_id,
+      title: c.name, description: c.description,
+      fileType: c.icon_type || 'doc', thumbUrl: c.preview_image || '',
+      views: 0, likes: 0, bookmarked: false,
+      createdAt: c.created_at
+    }))
+    this.set('contents', mapped)
+    return mapped
+  },
+
+  async fetchPosts() {
+    const data = await getPosts()
+    const mapped = data.map(p => ({
+      id: p.id, userId: p.user_id,
+      userName: p.users?.username || 'Pengguna',
+      content: p.content, likes: 0, comments: 0, shares: 0,
+      createdAt: p.created_at
+    }))
+    this.set('discussions', mapped)
+    return mapped
+  },
+
+  async fetchSaves() {
+    const data = await getSaves(CURRENT_USER.id)
+    this.set('saves', data)
+    return data
+  }
 };
 
-// Initial data seed
-function seedData() {
-  if (DB.get('seeded')) return;
-
-  DB.set('categories', [
-    {id:'cat1',name:'Tekno',slug:'tekno',icon:'fas fa-laptop'},
-    {id:'cat2',name:'Game',slug:'game',icon:'fas fa-gamepad'},
-    {id:'cat3',name:'Musik',slug:'musik',icon:'fas fa-music'},
-    {id:'cat4',name:'Film',slug:'film',icon:'fas fa-film'},
-    {id:'cat5',name:'Olahraga',slug:'olahraga',icon:'fas fa-dumbbell'},
-    {id:'cat6',name:'Kuliner',slug:'kuliner',icon:'fas fa-utensils'},
-  ]);
-
-  DB.set('contents', [
-    {id:'c1',userId:'u1',categoryId:'cat1',title:'Tutorial Godot 4',description:'Belajar GDScript dari dasar',fileType:'pdf',thumbUrl:'',views:120,likes:34,bookmarked:false,createdAt: new Date(Date.now()-86400000*2).toISOString()},
-    {id:'c2',userId:'u1',categoryId:'cat2',title:'Asset Pack Spaceship',description:'3D model siap pakai',fileType:'image',thumbUrl:'',views:89,likes:22,bookmarked:true,createdAt: new Date(Date.now()-86400000*5).toISOString()},
-    {id:'c3',userId:'u1',categoryId:'cat1',title:'Supabase + Next.js',description:'Full-stack web app modern',fileType:'doc',thumbUrl:'',views:210,likes:67,bookmarked:false,createdAt: new Date(Date.now()-86400000*7).toISOString()},
-  ]);
-
-  DB.set('linkwebs', [
-    {id:'lk1',userId:'u1',categoryId:'cat1',title:'OYBook Platform',url:'https://oybook.vercel.app',description:'Platform web novel dengan monetisasi',iconUrl:'',iconType:'url',status:'active',createdAt: new Date(Date.now()-86400000).toISOString()},
-    {id:'lk2',userId:'u1',categoryId:'cat1',title:'Portfolio Website',url:'https://sanpelong.dev',description:'Dark luxury personal site',iconUrl:'',iconType:'url',status:'active',createdAt: new Date(Date.now()-86400000*3).toISOString()},
-  ]);
-
-  DB.set('projects', [
-    {id:'p1',userId:'u1',name:'OYBook Platform',description:'Web Novel Platform',deployUrl:'https://oybook.vercel.app',techStack:'Next.js, Supabase',status:'live',visitCount:1245,performanceScore:95,uptimePercent:99,lastDeployed: new Date(Date.now()-86400000*2).toISOString()},
-    {id:'p2',userId:'u1',name:'Portfolio Website',description:'Dark Luxury Design',deployUrl:'https://sanpelong.dev',techStack:'HTML/CSS/JS',status:'live',visitCount:532,performanceScore:88,uptimePercent:98,lastDeployed: new Date(Date.now()-86400000*7).toISOString()},
-    {id:'p3',userId:'u1',name:'Rangership Game',description:'Space Flight Simulator',deployUrl:'',techStack:'Godot 4, GDScript',status:'development',visitCount:0,performanceScore:72,uptimePercent:0,lastDeployed:null},
-  ]);
-
-  DB.set('discussions', [
-    {id:'d1',userId:'u1',userName:'Andi Setiawan',content:'Bagaimana pendapat kalian tentang update teknologi terbaru tahun ini? AI semakin canggih!',likes:15,comments:3,shares:2,createdAt: new Date(Date.now()-7200000).toISOString()},
-    {id:'d2',userId:'u1',userName:'San Pelong',content:'Baru saja menyelesaikan optimasi 3D asset pipeline dari Blender ke Godot 4 menggunakan GDScript. Hasilnya sangat memuaskan! 🚀',likes:125,comments:23,shares:12,createdAt: new Date(Date.now()-86400000*2).toISOString()},
-  ]);
-
-  DB.set('user_profile', {
-    name:'San Pelong', username:'sanpelong', bio:'Teknik Informatika Student | Game Dev | Web Developer',
-    location:'Bekasi, Indonesia', occupation:'Teknik Informatika Student', techStack:'HTML/CSS/JS, Godot 4, Python, Blender',
-    interests:'Game Development, Web Development', avatarUrl:'', coverUrl:'',
-    followers:125, following:48,
-  });
-
-  DB.set('seeded', true);
+// ============================
+// INIT & SEED (Supabase)
+// ============================
+async function init() {
+  CURRENT_USER = await getCurrentUser()
+  if (!CURRENT_USER) {
+    window.location.href = 'auth.html'
+    return
+  }
+  CURRENT_PROFILE = await getProfile(CURRENT_USER.id)
+  await seedDataSupabase()
+  renderBeranda()
 }
+
+async function seedDataSupabase() {
+  await DB.fetchCategories()
+  await DB.fetchContents()
+  await DB.fetchPosts()
+  await DB.fetchSaves()
+
+  if (CURRENT_PROFILE) {
+    DB.set('user_profile', {
+      name: CURRENT_PROFILE.username,
+      username: CURRENT_PROFILE.username,
+      bio: CURRENT_PROFILE.bio || '',
+      location: CURRENT_PROFILE.location || '',
+      occupation: CURRENT_PROFILE.occupation || '',
+      techStack: CURRENT_PROFILE.tech_stack || '',
+      interests: CURRENT_PROFILE.interests || '',
+      avatarUrl: CURRENT_PROFILE.avatar_url || '',
+      coverUrl: CURRENT_PROFILE.cover_url || '',
+      followers: 0, following: 0,
+    })
+  }
+
+  // Keep projects & linkwebs in localStorage if not yet seeded
+  if (!DB.get('projects')) {
+    DB.set('projects', [
+      {id:'p1',userId:'u1',name:'OYBook Platform',description:'Web Novel Platform',deployUrl:'https://oybook.vercel.app',techStack:'Next.js, Supabase',status:'live',visitCount:1245,performanceScore:95,uptimePercent:99,lastDeployed: new Date(Date.now()-86400000*2).toISOString()},
+      {id:'p2',userId:'u1',name:'Portfolio Website',description:'Dark Luxury Design',deployUrl:'https://sanpelong.dev',techStack:'HTML/CSS/JS',status:'live',visitCount:532,performanceScore:88,uptimePercent:98,lastDeployed: new Date(Date.now()-86400000*7).toISOString()},
+      {id:'p3',userId:'u1',name:'Rangership Game',description:'Space Flight Simulator',deployUrl:'',techStack:'Godot 4, GDScript',status:'development',visitCount:0,performanceScore:72,uptimePercent:0,lastDeployed:null},
+    ])
+  }
+}
+
+// Legacy seedData (tidak lagi digunakan, digantikan init())
+function seedData() { /* no-op — data dimuat dari Supabase via init() */ }
 
 // ============================
 // TEMP FILE STORAGE
@@ -875,7 +953,7 @@ function contentCard(c) {
   return `
     <div>
       <!-- Card - hanya thumbnail -->
-      <div class="content-card group cursor-pointer" onclick="showContentDetail('${c.id}')" onmouseenter="showCardDesc(this)" onmouseleave="hideCardDesc(this)" ontouchstart="toggleCardDesc(this)">
+      <div class="content-card group cursor-pointer" onclick="showContentDetail('${c.id}')" onmouseenter="showCardDesc(this)" onmouseleave="hideCardDesc(this)">
         <div class="content-thumb bg-zinc-900 relative">
           ${c.thumbUrl ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover absolute inset-0">` : ''}
           <div class="absolute inset-0 flex items-center justify-center">
@@ -1203,15 +1281,16 @@ function renderPengaturan() {
 // ============================
 // ACTIONS
 // ============================
-function toggleBookmark(contentId) {
-  const contents = DB.getArr('contents');
-  const idx = contents.findIndex(c=>c.id===contentId);
-  if (idx>=0) {
-    contents[idx].bookmarked = !contents[idx].bookmarked;
-    DB.set('contents', contents);
-    toast(contents[idx].bookmarked ? 'Disimpan ke koleksi' : 'Dihapus dari koleksi');
-    renderPage(getCurrentPage());
+async function toggleBookmark(contentId) {
+  const saved = await toggleSave(CURRENT_USER.id, contentId, 'content')
+  const contents = DB.getArr('contents')
+  const idx = contents.findIndex(c => c.id === contentId)
+  if (idx >= 0) {
+    contents[idx].bookmarked = saved
+    DB.set('contents', contents)
   }
+  toast(saved ? '🔖 Disimpan ke koleksi' : 'Dihapus dari koleksi')
+  renderPage(getCurrentPage())
 }
 
 function likePost(postId) {
@@ -1221,12 +1300,234 @@ function likePost(postId) {
 }
 
 function showContentDetail(id) {
-  const c = DB.getArr('contents').find(c=>c.id===id);
-  if (!c) return;
   const contents = DB.getArr('contents');
+  const c = contents.find(c=>c.id===id);
+  if (!c) return;
+
+  // increment views
   const idx = contents.findIndex(cc=>cc.id===id);
   if(idx>=0){contents[idx].views++;DB.set('contents',contents);}
-  toast(`📄 ${c.title}`);
+
+  // init comments & ratings jika belum ada
+  if (!c.comments) { contents[idx].comments = []; DB.set('contents',contents); }
+  if (!c.ratings)  { contents[idx].ratings  = []; DB.set('contents',contents); }
+
+  const comments = DB.getArr('contents').find(cc=>cc.id===id).comments || [];
+  const ratings  = DB.getArr('contents').find(cc=>cc.id===id).ratings  || [];
+  const avgRating = ratings.length ? (ratings.reduce((a,b)=>a+b.score,0)/ratings.length).toFixed(1) : null;
+  const fileMetaExtra = c.fileName
+    ? `<div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-400 mb-0.5">Nama File</p><p class="text-sm font-semibold text-black truncate">${c.fileName}</p></div>
+       <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-400 mb-0.5">Ukuran</p><p class="text-sm font-semibold text-black">${c.fileSize ? formatSize(c.fileSize) : '-'}</p></div>`
+    : '';
+
+  const webUrlBlock = c.webUrl
+    ? `<a href="${c.webUrl}" target="_blank" rel="noopener" class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-700 hover:bg-blue-100 transition"><i class="fas fa-external-link-alt"></i><span class="truncate flex-1">${c.webUrl}</span><span class="text-xs font-semibold flex-shrink-0">Buka →</span></a>`
+    : '';
+
+  const pdfOpenBtn = c.fileType === 'pdf'
+    ? `<button onclick="togglePdfViewer('${c.id}')" class="flex-1 flex items-center justify-center gap-2 bg-black text-white text-sm py-3 rounded-xl font-semibold hover:bg-gray-800 transition"><i class="fas fa-file-pdf"></i> Buka PDF</button>`
+    : '';
+
+  const pdfViewerBlock = c.fileType === 'pdf'
+    ? `<div id="pdf-viewer-${c.id}" class="hidden mb-6"><div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold text-black">Preview PDF</span><button onclick="togglePdfViewer('${c.id}')" class="text-xs text-gray-400 hover:text-black"><i class="fas fa-times"></i> Tutup</button></div><iframe src="${c.fileData}" class="w-full rounded-2xl border border-gray-200" style="height:70vh;" title="${c.title}"></iframe></div>`
+    : '';
+
+  const fileActionsBlock = c.fileData
+    ? `<div class="flex gap-3 mb-4">${pdfOpenBtn}<button onclick="downloadContent('${c.id}')" class="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-black text-sm py-3 rounded-xl font-semibold hover:bg-gray-200 transition"><i class="fas fa-download"></i> Download</button></div>${pdfViewerBlock}`
+    : `<div class="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-4 text-sm text-yellow-700"><i class="fas fa-info-circle"></i><span>Konten ini tidak memiliki file yang diunggah.</span></div>`;
+
+
+
+  const stars = (score, interactive=false, name='') => [1,2,3,4,5].map(i=>
+    interactive
+      ? `<i class="${i<=score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg" onmouseover="hoverStar(this,${i})" onmouseout="resetStars('${name}')" onclick="setStar('${name}',${i})"></i>`
+      : `<i class="${i<=Math.round(score)?'fas':'far'} fa-star text-yellow-400 text-sm"></i>`
+  ).join('');
+
+  const commentsHtml = comments.length
+    ? comments.map(cm=>`
+        <div class="flex gap-3 py-4 border-b border-gray-100 last:border-0">
+          <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${cm.author.charAt(0).toUpperCase()}</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-black">${cm.author}</span>
+              <div class="flex">${stars(cm.rating)}</div>
+              <span class="text-xs text-gray-400 ml-auto">${new Date(cm.date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">${cm.text}</p>
+          </div>
+        </div>`).join('')
+    : `<div class="text-center py-10 text-gray-400"><i class="far fa-comment-dots text-3xl mb-2 block"></i><p class="text-sm">Belum ada komentar. Jadilah yang pertama!</p></div>`;
+
+  const html = `
+    <div id="content-detail-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeContentDetail()">
+      <div class="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
+
+        <!-- Header bar -->
+        <div class="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
+          <button onclick="closeContentDetail()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-sm text-gray-700"></i>
+          </button>
+          <span class="text-xs font-medium text-gray-400 uppercase tracking-widest">${c.fileType || 'Konten'}</span>
+          <button onclick="toggleBookmark('${c.id}');closeContentDetail();showContentDetail('${c.id}')" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="${c.bookmarked?'fas text-black':'far text-gray-400'} fa-bookmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Scrollable body -->
+        <div class="overflow-y-auto flex-1 px-5 pb-8">
+
+          <!-- Cover / Sampul -->
+          <div class="w-full aspect-[3/2] rounded-2xl overflow-hidden bg-zinc-900 flex items-center justify-center mb-5 relative">
+            ${c.thumbUrl
+              ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover">`
+              : `<i class="${fileIcon} text-6xl text-white opacity-30"></i>`}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute bottom-4 left-4 right-4">
+              <h2 class="text-white text-xl font-bold leading-tight drop-shadow">${c.title}</h2>
+            </div>
+          </div>
+
+          <!-- Rating ringkas -->
+          <div class="flex items-center gap-3 mb-4">
+            ${avgRating
+              ? `<div class="flex items-center gap-1.5">
+                  <span class="text-2xl font-bold text-black">${avgRating}</span>
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex">${stars(avgRating)}</div>
+                    <span class="text-xs text-gray-400">${ratings.length} ulasan</span>
+                  </div>
+                </div>`
+              : `<span class="text-sm text-gray-400 italic">Belum ada penilaian</span>`}
+            <div class="ml-auto flex items-center gap-3 text-sm text-gray-500">
+              <span><i class="fas fa-eye mr-1 text-gray-400"></i>${c.views}</span>
+              <span><i class="fas fa-heart mr-1 text-red-400"></i>${c.likes}</span>
+            </div>
+          </div>
+
+          <!-- Deskripsi -->
+          <div class="mb-6">
+            <h3 class="text-sm font-semibold text-black mb-2">Tentang Konten</h3>
+            <p class="text-sm text-gray-600 leading-relaxed">${c.description || 'Tidak ada deskripsi tersedia.'}</p>
+          </div>
+
+          <!-- Info meta -->
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-gray-50 rounded-xl p-3">
+              <p class="text-xs text-gray-400 mb-0.5">Tipe File</p>
+              <p class="text-sm font-semibold text-black uppercase">${c.fileType || '-'}</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <p class="text-xs text-gray-400 mb-0.5">Diunggah</p>
+              <p class="text-sm font-semibold text-black">${new Date(c.createdAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
+            </div>
+            ${fileMetaExtra}
+          </div>
+
+          <!-- Tombol Aksi File -->
+          ${webUrlBlock}
+          ${fileActionsBlock}
+
+          <!-- Beri Rating -->
+          <div class="bg-gray-50 rounded-2xl p-4 mb-6">
+            <h3 class="text-sm font-semibold text-black mb-3">Beri Penilaian</h3>
+            <div id="star-input-${c.id}" data-score="0" class="flex gap-1 mb-3">
+              ${stars(0, true, c.id)}
+            </div>
+            <input id="comment-author-${c.id}" type="text" placeholder="Nama kamu" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none mb-2 bg-white">
+            <textarea id="comment-text-${c.id}" placeholder="Tulis komentar..." rows="3" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none resize-none bg-white mb-3"></textarea>
+            <button onclick="submitComment('${c.id}')" class="w-full bg-black text-white text-sm py-2.5 rounded-xl font-semibold hover:bg-gray-800 transition">
+              Kirim Komentar
+            </button>
+          </div>
+
+          <!-- Komentar -->
+          <div>
+            <h3 class="text-sm font-semibold text-black mb-1">Komentar <span class="text-gray-400 font-normal">(${comments.length})</span></h3>
+            <div id="comments-list-${c.id}">
+              ${commentsHtml}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function togglePdfViewer(contentId) {
+  const viewer = document.getElementById(`pdf-viewer-${contentId}`);
+  if (!viewer) return;
+  viewer.classList.toggle('hidden');
+  if (!viewer.classList.contains('hidden')) {
+    viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function downloadContent(contentId) {
+  const c = DB.getArr('contents').find(c => c.id === contentId);
+  if (!c || !c.fileData) { toast('⚠️ Tidak ada file untuk diunduh'); return; }
+  const a = document.createElement('a');
+  a.href = c.fileData;
+  a.download = c.fileName || c.title;
+  a.click();
+  toast('⬇️ Mengunduh file...');
+}
+
+function closeContentDetail() {
+  const modal = document.getElementById('content-detail-modal');
+  if (modal) modal.remove();
+}
+
+function hoverStar(el, score) {
+  const container = el.parentElement;
+  [...container.querySelectorAll('i')].forEach((s,i)=>{
+    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
+  });
+}
+
+function resetStars(contentId) {
+  const container = document.getElementById(`star-input-${contentId}`);
+  if (!container) return;
+  const score = parseInt(container.dataset.score)||0;
+  [...container.querySelectorAll('i')].forEach((s,i)=>{
+    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
+  });
+}
+
+function setStar(contentId, score) {
+  const container = document.getElementById(`star-input-${contentId}`);
+  if (!container) return;
+  container.dataset.score = score;
+  [...container.querySelectorAll('i')].forEach((s,i)=>{
+    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
+  });
+}
+
+function submitComment(contentId) {
+  const author = document.getElementById(`comment-author-${contentId}`).value.trim();
+  const text   = document.getElementById(`comment-text-${contentId}`).value.trim();
+  const score  = parseInt(document.getElementById(`star-input-${contentId}`)?.dataset.score)||0;
+
+  if (!author) { toast('⚠️ Masukkan nama kamu'); return; }
+  if (!text)   { toast('⚠️ Tulis komentar dulu'); return; }
+  if (!score)  { toast('⚠️ Beri bintang dulu'); return; }
+
+  const contents = DB.getArr('contents');
+  const idx = contents.findIndex(c=>c.id===contentId);
+  if (idx<0) return;
+
+  if (!contents[idx].comments) contents[idx].comments = [];
+  if (!contents[idx].ratings)  contents[idx].ratings  = [];
+
+  contents[idx].comments.unshift({ author, text, rating: score, date: new Date().toISOString() });
+  contents[idx].ratings.push({ score });
+  DB.set('contents', contents);
+
+  closeContentDetail();
+  showContentDetail(contentId);
+  toast('✅ Komentar berhasil dikirim!');
 }
 
 // ============================
@@ -1320,65 +1621,86 @@ function handleLinkIcon(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-function submitUpload() {
+async function submitUpload() {
   const title = document.getElementById('up-title').value.trim();
   const catId = document.getElementById('up-category').value;
-  const desc = document.getElementById('up-desc').value.trim();
+  const desc  = document.getElementById('up-desc').value.trim();
   if (!title) { toast('⚠️ Judul wajib diisi!'); return; }
 
-  let fileType = 'doc';
+  let fileUrl = null, thumbUrl = null, fileType = 'doc';
+
   if (tempFiles.main) {
     const ext = tempFiles.main.name.split('.').pop().toLowerCase();
     const typeMap = {png:'image',jpg:'image',jpeg:'image',gif:'image',webp:'image',mp4:'video',pdf:'pdf',doc:'doc',docx:'docx'};
     fileType = typeMap[ext] || 'doc';
+    toast('⏳ Mengupload file...');
+    fileUrl = await uploadContentFile(CURRENT_USER.id, tempFiles.main);
   }
 
-  const newContent = {
-    id: DB.uuid(), userId:'u1', categoryId: catId||'cat1',
+  if (tempFiles.thumbFile) {
+    thumbUrl = await uploadThumbnail(CURRENT_USER.id, tempFiles.thumbFile);
+  }
+
+  const content = await addContent(CURRENT_USER.id, {
+    name: title,
+    description: desc,
+    category_id: catId || null,
+    icon_type: fileType,
+    display_url: fileUrl || document.getElementById('up-url').value.trim() || null,
+    preview_image: thumbUrl || null,
+    status: 'published'
+  });
+
+  DB.pushArr('contents', {
+    id: content.id, userId: CURRENT_USER.id, categoryId: catId,
     title, description: desc, fileType,
-    thumbUrl: tempFiles.thumb || '',
-    views:0, likes:0, bookmarked:false,
-    createdAt: new Date().toISOString(),
-  };
-  DB.pushArr('contents', newContent);
+    thumbUrl: thumbUrl || '', views: 0, likes: 0, bookmarked: false,
+    createdAt: content.created_at
+  });
+
   toast('✅ Konten berhasil diupload!');
   closeModal('modal-upload');
   resetUploadForm();
   renderPage(getCurrentPage());
 }
 
-function submitLink() {
+async function submitLink() {
   const title = document.getElementById('lk-title').value.trim();
-  const url = document.getElementById('lk-url').value.trim();
+  const url   = document.getElementById('lk-url').value.trim();
   if (!title || !url) { toast('⚠️ Judul dan URL wajib diisi!'); return; }
 
-  const newLink = {
-    id: DB.uuid(), userId:'u1',
-    categoryId: document.getElementById('lk-category').value || 'cat1',
+  const ref = await addRef(CURRENT_USER.id, { theme: title, language: url });
+
+  DB.pushArr('linkwebs', {
+    id: ref.id, userId: CURRENT_USER.id,
+    categoryId: document.getElementById('lk-category').value || null,
     title, url,
     description: document.getElementById('lk-desc').value.trim(),
     iconUrl: tempFiles.linkIcon || '',
     status: document.getElementById('lk-status').value,
     bookmarked: false,
-    createdAt: new Date().toISOString(),
-  };
-  DB.pushArr('linkwebs', newLink);
+    createdAt: ref.created_at
+  });
+
   toast('✅ Link web berhasil disimpan!');
   closeModal('modal-link');
   resetLinkForm();
   renderPage(getCurrentPage());
 }
 
-function submitPost() {
+async function submitPost() {
   const content = document.getElementById('post-content').value.trim();
   if (!content) { toast('⚠️ Tulis sesuatu dulu!'); return; }
-  const profile = DB.get('user_profile') || {};
-  const newPost = {
-    id: DB.uuid(), userId:'u1', userName: profile.name||'San Pelong',
-    content, likes:0, comments:0, shares:0,
-    createdAt: new Date().toISOString(),
-  };
-  DB.pushArr('discussions', newPost);
+
+  const post = await addPost(CURRENT_USER.id, content);
+
+  DB.pushArr('discussions', {
+    id: post.id, userId: CURRENT_USER.id,
+    userName: CURRENT_PROFILE?.username || 'Pengguna',
+    content, likes: 0, comments: 0, shares: 0,
+    createdAt: post.created_at
+  });
+
   document.getElementById('post-content').value = '';
   toast('✅ Post berhasil dipublikasikan!');
   closeModal('modal-post');
@@ -1414,45 +1736,57 @@ function deleteProject(id) {
   renderAnalyst();
 }
 
-function saveEditProfil() {
-  const profile = DB.get('user_profile') || {};
-  profile.name = document.getElementById('ep-name').value.trim() || profile.name;
-  profile.username = document.getElementById('ep-username').value.trim() || profile.username;
-  profile.bio = document.getElementById('ep-bio').value.trim();
-  profile.location = document.getElementById('ep-location').value.trim();
-  profile.occupation = document.getElementById('ep-occupation').value.trim();
-  profile.techStack = document.getElementById('ep-techstack').value.trim();
-  profile.interests = document.getElementById('ep-interests').value.trim();
-  DB.set('user_profile', profile);
+async function saveEditProfil() {
+  const updates = {
+    username:   document.getElementById('ep-username').value.trim() || CURRENT_PROFILE.username,
+    bio:        document.getElementById('ep-bio').value.trim(),
+    location:   document.getElementById('ep-location').value.trim(),
+    occupation: document.getElementById('ep-occupation').value.trim(),
+    tech_stack: document.getElementById('ep-techstack').value.trim(),
+    interests:  document.getElementById('ep-interests').value.trim(),
+  };
+  CURRENT_PROFILE = await updateProfile(CURRENT_USER.id, updates);
+  DB.set('user_profile', {
+    name: CURRENT_PROFILE.username,
+    username: CURRENT_PROFILE.username,
+    bio: CURRENT_PROFILE.bio || '',
+    location: CURRENT_PROFILE.location || '',
+    occupation: CURRENT_PROFILE.occupation || '',
+    techStack: CURRENT_PROFILE.tech_stack || '',
+    interests: CURRENT_PROFILE.interests || '',
+    avatarUrl: CURRENT_PROFILE.avatar_url || '',
+    coverUrl: CURRENT_PROFILE.cover_url || '',
+    followers: 0, following: 0,
+  });
   toast('✅ Profil berhasil diperbarui!');
   closeModal('modal-editprofil');
   renderProfil();
 }
 
-function uploadAvatar(input) {
+async function uploadAvatar(input) {
   if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const profile = DB.get('user_profile') || {};
-    profile.avatarUrl = e.target.result;
-    DB.set('user_profile', profile);
-    toast('✅ Foto profil diperbarui!');
-    renderProfil();
-  };
-  reader.readAsDataURL(input.files[0]);
+  toast('⏳ Mengupload foto...');
+  const url = await uploadAvatarFile(CURRENT_USER.id, input.files[0]);
+  await updateProfile(CURRENT_USER.id, { avatar_url: url });
+  CURRENT_PROFILE.avatar_url = url;
+  const profile = DB.get('user_profile') || {};
+  profile.avatarUrl = url;
+  DB.set('user_profile', profile);
+  toast('✅ Foto profil diperbarui!');
+  renderProfil();
 }
 
-function uploadCover(input) {
+async function uploadCover(input) {
   if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const profile = DB.get('user_profile') || {};
-    profile.coverUrl = e.target.result;
-    DB.set('user_profile', profile);
-    toast('✅ Cover diperbarui!');
-    renderProfil();
-  };
-  reader.readAsDataURL(input.files[0]);
+  toast('⏳ Mengupload cover...');
+  const url = await uploadCoverFile(CURRENT_USER.id, input.files[0]);
+  await updateProfile(CURRENT_USER.id, { cover_url: url });
+  CURRENT_PROFILE.cover_url = url;
+  const profile = DB.get('user_profile') || {};
+  profile.coverUrl = url;
+  DB.set('user_profile', profile);
+  toast('✅ Cover diperbarui!');
+  renderProfil();
 }
 
 function clearAllData() {
@@ -1509,7 +1843,7 @@ function populateCategorySelects() {
 }
 
 function resetUploadForm() {
-  ['up-title','up-desc'].forEach(id=>document.getElementById(id).value='');
+  ['up-title','up-desc','up-url'].forEach(id=>document.getElementById(id).value='');
   clearMainFile();
   tempFiles = {main:null, thumb:null, linkIcon:null};
   document.getElementById('thumb-preview').classList.add('hidden');
@@ -1589,8 +1923,7 @@ function toggleCardDesc(cardEl) {
 // ============================
 // INIT
 // ============================
-seedData();
-renderBeranda();
+init();
 </script>
 </body>
 </html>
