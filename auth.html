@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nissan Ex — Masuk</title>
+<title>Nissan Ex — Masuk / Daftar</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -13,6 +13,8 @@
   .form-input:focus { border-color:#000; }
   #toast { position:fixed; bottom:24px; right:24px; background:#111; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; z-index:999; opacity:0; transition:opacity .3s; pointer-events:none; }
   #toast.show { opacity:1; }
+  .loading { opacity: 0.7; pointer-events: none; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -40,13 +42,13 @@
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
-          <input id="login-email" type="email" class="form-input" placeholder="email@contoh.com">
+          <input id="login-email" type="email" class="form-input" placeholder="email@contoh.com" autocomplete="email">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
-          <input id="login-pass" type="password" class="form-input" placeholder="••••••••">
+          <input id="login-pass" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
         </div>
-        <button onclick="doLogin()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
+        <button id="login-btn" onclick="doLogin()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
           Masuk
         </button>
       </div>
@@ -57,17 +59,21 @@
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Username</label>
-          <input id="reg-username" type="text" class="form-input" placeholder="sanpelong">
+          <input id="reg-username" type="text" class="form-input" placeholder="sanpelong" autocomplete="username">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
-          <input id="reg-email" type="email" class="form-input" placeholder="email@contoh.com">
+          <input id="reg-email" type="email" class="form-input" placeholder="email@contoh.com" autocomplete="email">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
-          <input id="reg-pass" type="password" class="form-input" placeholder="Min. 6 karakter">
+          <input id="reg-pass" type="password" class="form-input" placeholder="Min. 6 karakter" autocomplete="new-password">
         </div>
-        <button onclick="doRegister()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Konfirmasi Password</label>
+          <input id="reg-pass-confirm" type="password" class="form-input" placeholder="Ulangi password" autocomplete="off">
+        </div>
+        <button id="register-btn" onclick="doRegister()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
           Buat Akun
         </button>
       </div>
@@ -82,56 +88,239 @@
 <div id="toast"></div>
 
 <script type="module">
-  import { signIn, signUp, getCurrentUser } from './supabase.js'
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-  // Redirect jika sudah login
-  getCurrentUser().then(user => {
-    if (user) window.location.href = 'menu.html'
-  })
+  // Konfigurasi Supabase
+  const SUPABASE_URL = 'https://ewezbxdhwuwfzfuqgymb.supabase.co'
+  const SUPABASE_KEY = 'ssb_publishable_hWnbHiYsUObBrPJuzDu3YQ_PYBhLn39'
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-  function toast(msg) {
+  // Fungsi toast
+  function toast(msg, isError = false) {
     const el = document.getElementById('toast')
     el.textContent = msg
+    el.style.background = isError ? '#dc2626' : '#111'
     el.classList.add('show')
-    setTimeout(() => el.classList.remove('show'), 3000)
+    setTimeout(() => {
+      el.classList.remove('show')
+      el.style.background = '#111'
+    }, 3000)
   }
 
+  // Set loading state untuk button
+  function setLoading(buttonId, isLoading, originalText) {
+    const btn = document.getElementById(buttonId)
+    if (isLoading) {
+      btn.disabled = true
+      btn.classList.add('loading')
+      btn.textContent = 'Memproses...'
+    } else {
+      btn.disabled = false
+      btn.classList.remove('loading')
+      btn.textContent = originalText
+    }
+  }
+
+  // Cek session saat ini
+  async function checkSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (session) {
+        // Sudah login, redirect ke menu
+        window.location.href = 'menu.html'
+      }
+    } catch (e) {
+      console.error('Session check error:', e)
+    }
+  }
+
+  // Redirect jika sudah login
+  checkSession()
+
+  // Set tab aktif
   window.setTab = function(tab) {
     document.getElementById('panel-masuk').classList.toggle('hidden', tab !== 'masuk')
     document.getElementById('panel-daftar').classList.toggle('hidden', tab !== 'daftar')
-    document.getElementById('tab-masuk').className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${tab==='masuk' ? 'bg-black text-white' : 'text-gray-500'}`
-    document.getElementById('tab-daftar').className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${tab==='daftar' ? 'bg-black text-white' : 'text-gray-500'}`
+    
+    const tabMasuk = document.getElementById('tab-masuk')
+    const tabDaftar = document.getElementById('tab-daftar')
+    
+    if (tab === 'masuk') {
+      tabMasuk.className = 'flex-1 py-2 rounded-lg text-sm font-bold bg-black text-white transition'
+      tabDaftar.className = 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-500 transition'
+    } else {
+      tabMasuk.className = 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-500 transition'
+      tabDaftar.className = 'flex-1 py-2 rounded-lg text-sm font-bold bg-black text-white transition'
+    }
   }
 
+  // Fungsi Login
   window.doLogin = async function() {
     const email = document.getElementById('login-email').value.trim()
-    const pass  = document.getElementById('login-pass').value
-    if (!email || !pass) { toast('⚠️ Email dan password wajib diisi'); return }
+    const pass = document.getElementById('login-pass').value
+    
+    if (!email || !pass) {
+      toast('⚠️ Email dan password wajib diisi', true)
+      return
+    }
+    
+    const loginBtn = document.getElementById('login-btn')
+    setLoading('login-btn', true, 'Masuk')
+    
     try {
-      toast('⏳ Sedang masuk...')
-      await signIn(email, pass)
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: pass
+      })
+      
+      if (error) throw error
+      
       toast('✅ Berhasil masuk!')
-      setTimeout(() => window.location.href = 'menu.html', 800)
-    } catch(e) {
-      toast('❌ ' + e.message)
+      
+      // Tunggu sebentar lalu redirect
+      setTimeout(() => {
+        window.location.href = 'menu.html'
+      }, 800)
+      
+    } catch (e) {
+      console.error('Login error:', e)
+      let errorMsg = 'Gagal masuk. '
+      if (e.message.includes('Invalid login credentials')) {
+        errorMsg += 'Email atau password salah.'
+      } else if (e.message.includes('Email not confirmed')) {
+        errorMsg += 'Email belum dikonfirmasi. Cek inbox kamu.'
+      } else {
+        errorMsg += e.message
+      }
+      toast('❌ ' + errorMsg, true)
+      setLoading('login-btn', false, 'Masuk')
     }
   }
 
+  // Fungsi Register
   window.doRegister = async function() {
     const username = document.getElementById('reg-username').value.trim()
-    const email    = document.getElementById('reg-email').value.trim()
-    const pass     = document.getElementById('reg-pass').value
-    if (!username || !email || !pass) { toast('⚠️ Semua field wajib diisi'); return }
-    if (pass.length < 6) { toast('⚠️ Password minimal 6 karakter'); return }
+    const email = document.getElementById('reg-email').value.trim()
+    const pass = document.getElementById('reg-pass').value
+    const passConfirm = document.getElementById('reg-pass-confirm').value
+    
+    // Validasi
+    if (!username || !email || !pass || !passConfirm) {
+      toast('⚠️ Semua field wajib diisi', true)
+      return
+    }
+    
+    if (pass.length < 6) {
+      toast('⚠️ Password minimal 6 karakter', true)
+      return
+    }
+    
+    if (pass !== passConfirm) {
+      toast('⚠️ Password dan konfirmasi password tidak cocok', true)
+      return
+    }
+    
+    if (username.length < 3) {
+      toast('⚠️ Username minimal 3 karakter', true)
+      return
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      toast('⚠️ Username hanya boleh huruf, angka, dan underscore', true)
+      return
+    }
+    
+    const registerBtn = document.getElementById('register-btn')
+    setLoading('register-btn', true, 'Buat Akun')
+    
     try {
-      toast('⏳ Membuat akun...')
-      await signUp(email, pass, username)
-      toast('✅ Akun dibuat! Silakan masuk.')
-      setTimeout(() => window.setTab('masuk'), 1200)
-    } catch(e) {
-      toast('❌ ' + e.message)
+      // 1. Register ke Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: pass,
+        options: {
+          data: {
+            username: username,
+            full_name: username
+          }
+        }
+      })
+      
+      if (signUpError) throw signUpError
+      
+      if (!authData.user) {
+        throw new Error('Gagal membuat akun')
+      }
+      
+      // 2. Profile akan dibuat otomatis oleh trigger SQL handle_new_user()
+      // Tapi kita perlu update username dan data lain karena trigger hanya set default
+      
+      // Tunggu sebentar agar trigger selesai
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // 3. Update profile user dengan data yang benar
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          username: username,
+          full_name: username,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', authData.user.id)
+      
+      if (updateError) {
+        console.warn('Profile update warning:', updateError)
+        // Tidak perlu throw, akun tetap bisa digunakan
+      }
+      
+      toast('✅ Akun berhasil dibuat! Silakan masuk.')
+      
+      // Reset form
+      document.getElementById('reg-username').value = ''
+      document.getElementById('reg-email').value = ''
+      document.getElementById('reg-pass').value = ''
+      document.getElementById('reg-pass-confirm').value = ''
+      
+      // Switch ke tab login
+      setTimeout(() => {
+        window.setTab('masuk')
+        // Pre-fill email
+        document.getElementById('login-email').value = email
+      }, 1200)
+      
+    } catch (e) {
+      console.error('Register error:', e)
+      let errorMsg = 'Gagal membuat akun. '
+      
+      if (e.message.includes('User already registered')) {
+        errorMsg += 'Email sudah terdaftar.'
+      } else if (e.message.includes('Password should be at least')) {
+        errorMsg += 'Password minimal 6 karakter.'
+      } else if (e.message.includes('username')) {
+        errorMsg += 'Username sudah digunakan.'
+      } else {
+        errorMsg += e.message
+      }
+      
+      toast('❌ ' + errorMsg, true)
+    } finally {
+      setLoading('register-btn', false, 'Buat Akun')
     }
   }
+
+  // Event listener untuk Enter key
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      const masukPanel = document.getElementById('panel-masuk')
+      const daftarPanel = document.getElementById('panel-daftar')
+      
+      if (!masukPanel.classList.contains('hidden')) {
+        doLogin()
+      } else if (!daftarPanel.classList.contains('hidden')) {
+        doRegister()
+      }
+    }
+  })
 </script>
 </body>
 </html>

@@ -7,96 +7,14 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: Georgia, 'Times New Roman', serif; background: #f3f4f6; }
-  .brand-lora { font-family: 'Lora', serif; }
-  .page-content { display: none; }
-  .page-content.active { display: block; animation: fadeIn .35s ease; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-  .nav-link.active { background: rgba(255,255,255,0.18); color:#fff; }
-  .custom-scrollbar::-webkit-scrollbar { width:4px; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background:#000; border-radius:10px; }
+<link rel="stylesheet" href="css/menu.css" />
 
-  /* Upload tabs */
-  .upload-tab { cursor:pointer; padding:8px 20px; border-radius:10px; font-weight:600; font-size:13px; transition:all .2s; color:#888; border:1.5px solid transparent; }
-  .upload-tab.active { background:#000; color:#fff; }
 
-  /* Upload drag zone */
-  .drop-zone { border:2px dashed #ccc; border-radius:16px; padding:32px 16px; text-align:center; cursor:pointer; transition:all .2s; }
-  .drop-zone.hover { border-color:#000; background:#f9f9f9; }
-  .drop-zone input[type=file] { display:none; }
-
-  /* Icon preview */
-  .icon-preview { width:52px; height:52px; border-radius:12px; object-fit:cover; border:1.5px solid #e5e7eb; }
-
-  /* Content card - hanya thumbnail saja */
-  .content-card { background:#fff; border-radius:20px; border:1px solid #f0f0f0; overflow:hidden; transition:all .25s; box-shadow:0 2px 8px rgba(0,0,0,.04); position:relative; cursor:pointer; }
-  .content-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.1); }
-  .content-card.active-desc { transform:translateY(-3px); }
-  
-  .content-thumb { width:100%; aspect-ratio:2/3; background:#111; object-fit:cover; display:flex; align-items:center; justify-content:center; color:#555; font-size:28px; border-radius:20px; position:relative; }
-  
-  /* Description overlay - INSIDE card, muncul saat hover/tap */
-  .content-desc-overlay { position:absolute; inset:0; background:rgba(0,0,0,.85); border-radius:20px; padding:20px; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transform:scale(0.95); transition:all .25s; z-index:10; }
-  .content-card:hover .content-desc-overlay,
-  .content-card.active-desc .content-desc-overlay { opacity:1; pointer-events:auto; transform:scale(1); }
-  
-  .content-desc-overlay p { font-size:13px; color:#fff; line-height:1.6; margin:0; text-align:center; }
-  
-  /* Title & info - OUTSIDE card, below */
-  .content-info { padding:12px 0; text-align:center; }
-  .content-info h3 { margin:0; font-size:13px; font-weight:600; color:#111; line-height:1.4; }
-  .content-info p { margin:4px 0 0; font-size:11px; color:#999; }
-
-  /* Link card */
-  .link-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; padding:16px; display:flex; gap:12px; align-items:center; cursor:pointer; transition:all .2s; }
-  .link-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
-  .link-icon { width:44px; height:44px; border-radius:10px; object-fit:cover; background:#f3f3f3; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:20px; }
-
-  /* Modal */
-  .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; justify-content:center; align-items:center; }
-  .modal-backdrop.open { display:flex; animation:fadeIn .2s ease; }
-  .modal-box { background:#fff; border-radius:24px; width:min(540px,95vw); max-height:92vh; overflow-y:auto; padding:32px; position:relative; }
-
-  /* Toast */
-  #toast { position:fixed; bottom:24px; right:24px; background:#111; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; z-index:999; opacity:0; transition:opacity .3s; pointer-events:none; }
-  #toast.show { opacity:1; }
-
-  /* Badge */
-  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
-  .badge-green { background:#d1fae5; color:#065f46; }
-  .badge-yellow { background:#fef3c7; color:#92400e; }
-  .badge-blue { background:#dbeafe; color:#1e40af; }
-
-  /* Form */
-  .form-input { width:100%; border:1.5px solid #e5e7eb; border-radius:10px; padding:10px 14px; font-family:Georgia,'Times New Roman',serif; font-size:14px; outline:none; transition:border .2s; }
-  .form-input:focus { border-color:#000; }
-  .form-label { font-size:12px; font-weight:700; color:#555; margin-bottom:5px; display:block; letter-spacing:.04em; text-transform:uppercase; }
-
-  /* Progress bar */
-  .progress { background:#e5e7eb; border-radius:99px; height:6px; overflow:hidden; }
-  .progress-bar { background:#111; border-radius:99px; height:100%; transition:width .3s; }
-
-  /* Skeleton */
-  .skel { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:skel 1.5s infinite; border-radius:8px; }
-  @keyframes skel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-  /* Trending rank */
-  .rank-num { font-size:28px; font-weight:700; color:#d1d5db; line-height:1; }
-
-  /* Discussion post */
-  .post-item { border-bottom:1px solid #f0f0f0; padding:20px 0; }
-  .post-item:last-child { border-bottom:none; }
-
-  /* Nav active indicator */
-  @media(min-width:1024px) {
-    .sidebar-nav { position:relative; }
-  }
-</style>
+<!-- ===== SUPABASE — module script, expose ke window ===== -->
+<script type="module"src="supabase.js"></script>
 </head>
 <body class="flex min-h-screen">
-
+ 
 <!-- ===== SIDEBAR ===== -->
 <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-black text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl flex flex-col">
   <div class="p-6 flex items-center gap-3">
@@ -131,10 +49,10 @@
     </button>
   </div>
 </aside>
-
+ 
 <!-- ===== MAIN ===== -->
 <main class="flex-1 lg:ml-64 p-4 md:p-8 min-h-screen">
-
+ 
   <!-- HEADER -->
   <header class="mb-8">
     <div class="lg:hidden flex items-center justify-between gap-4 mb-4">
@@ -143,7 +61,7 @@
         <span class="text-lg font-bold brand-lora">Nissan Ex</span>
       </div>
       <div class="flex items-center gap-2">
-        <button onclick="document.getElementById('mobile-search-bar').classList.toggle('hidden'); navigateTo('kategori'); setTimeout(()=>document.querySelector('#mobile-search-bar input').focus(),100);" class="p-2"><i class="fas fa-search text-xl"></i></button>
+        <button onclick="document.getElementById('mobile-search-bar').classList.toggle('hidden'); window.navigateTo('kategori'); setTimeout(()=>document.querySelector('#mobile-search-bar input').focus(),100);" class="p-2"><i class="fas fa-search text-xl"></i></button>
         <button onclick="navigateTo('profil')" class="p-2"><i class="fas fa-user-circle text-xl"></i></button>
       </div>
     </div>
@@ -166,12 +84,12 @@
     <!-- Search results dropdown -->
     <div id="search-results" class="hidden absolute z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 mt-1 w-full max-w-2xl"></div>
   </header>
-
+ 
   <!-- ===== PAGE: BERANDA ===== -->
   <div id="page-beranda" class="page-content active">
     <!-- Category icons -->
-    <section id="category-icons" class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-8"></section>
-
+    <section id="category-icons" class="grid grid-cols-5 gap-3 mb-8"></section>
+ 
     <!-- Banner -->
     <section class="mb-8">
       <div class="relative w-full bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between">
@@ -185,7 +103,7 @@
         <div class="hidden md:block absolute right-0 top-0 h-full w-1/3 bg-black rounded-l-[5rem]"></div>
       </div>
     </section>
-
+ 
     <!-- Content Grid -->
     <section>
       <div class="flex items-center justify-between mb-5">
@@ -195,7 +113,7 @@
       <div id="beranda-content-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"></div>
     </section>
   </div>
-
+ 
   <!-- ===== PAGE: KATEGORI ===== -->
   <div id="page-kategori" class="page-content">
     <div class="flex items-center justify-between mb-6">
@@ -210,7 +128,7 @@
       <div id="kategori-links-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
     </div>
   </div>
-
+ 
   <!-- ===== PAGE: TREN ===== -->
   <div id="page-tren" class="page-content">
     <div class="flex items-center justify-between mb-8">
@@ -218,7 +136,7 @@
     </div>
     <div id="tren-list" class="space-y-4"></div>
   </div>
-
+ 
   <!-- ===== PAGE: DISIMPAN ===== -->
   <div id="page-disimpan" class="page-content">
     <div class="flex items-center justify-between mb-8">
@@ -231,7 +149,7 @@
       <p class="text-sm mt-1">Tekan ikon bookmark pada konten untuk menyimpan</p>
     </div>
   </div>
-
+ 
   <!-- ===== PAGE: DISKUSI ===== -->
   <div id="page-diskusi" class="page-content">
     <div class="flex items-center justify-between mb-8">
@@ -248,7 +166,7 @@
       </div>
     </div>
   </div>
-
+ 
   <!-- ===== PAGE: ANALYST ===== -->
   <div id="page-analyst" class="page-content">
     <div class="grid md:grid-cols-2 gap-6">
@@ -279,7 +197,7 @@
           </div>
         </div>
       </div>
-
+ 
       <!-- Performance -->
       <div class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8">
         <h2 class="text-2xl font-bold tracking-tight mb-6">Project Performance</h2>
@@ -307,7 +225,7 @@
       </div>
     </div>
   </div>
-
+ 
   <!-- ===== PAGE: PROFIL ===== -->
   <div id="page-profil" class="page-content">
     <!-- Cover -->
@@ -348,7 +266,7 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- Stats -->
     <div class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-8">
       <div class="bg-white rounded-[1.5rem] shadow border border-gray-100 p-4 text-center">
@@ -376,7 +294,7 @@
         <p class="text-xs text-gray-500 mt-1">Bagikan</p>
       </div>
     </div>
-
+ 
     <!-- About + Upload section -->
     <div class="grid md:grid-cols-3 gap-6 mb-8">
       <div class="md:col-span-2 bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8">
@@ -400,7 +318,7 @@
           </div>
         </div>
       </div>
-
+ 
       <!-- Upload panel -->
       <div class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-6">
         <h3 class="text-xl font-bold text-black mb-5 flex items-center gap-2">
@@ -415,7 +333,7 @@
             <i class="fas fa-link mr-1"></i> Link Web
           </button>
         </div>
-
+ 
         <!-- KONTEN UPLOAD -->
         <div id="upload-konten-panel">
           <div class="drop-zone mb-3" id="drop-zone-mini" onclick="document.getElementById('mini-file').click()" ondragover="event.preventDefault();this.classList.add('hover')" ondragleave="this.classList.remove('hover')" ondrop="handleMiniDrop(event)">
@@ -436,7 +354,7 @@
             <i class="fas fa-upload mr-2"></i>Upload & Detail
           </button>
         </div>
-
+ 
         <!-- LINK WEB UPLOAD -->
         <div id="upload-linkweb-panel" class="hidden">
           <button onclick="openLinkModal()" class="w-full border-2 border-dashed border-gray-300 text-gray-500 py-8 rounded-xl font-bold text-sm hover:border-black hover:text-black transition text-center">
@@ -444,7 +362,7 @@
             Tambah Link Web
           </button>
         </div>
-
+ 
         <!-- Recent uploads -->
         <div class="mt-4">
           <p class="text-xs font-bold text-black mb-2 uppercase tracking-widest">Upload Terbaru</p>
@@ -452,14 +370,14 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- Posts / Activity -->
     <div class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8">
       <h2 class="text-2xl font-bold text-black mb-8">Aktivitas Terbaru</h2>
       <div id="profil-activity" class="space-y-0"></div>
     </div>
   </div>
-
+ 
   <!-- ===== PAGE: PENGATURAN ===== -->
   <div id="page-pengaturan" class="page-content">
     <div class="grid md:grid-cols-2 gap-6">
@@ -493,22 +411,22 @@
       </div>
     </div>
   </div>
-
+ 
 </main>
-
+ 
 <!-- ===== MOBILE OVERLAY ===== -->
 <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
-
+ 
 <!-- ===== TOAST ===== -->
 <div id="toast"></div>
-
+ 
 <!-- ===== MODAL: UPLOAD KONTEN ===== -->
 <div id="modal-upload" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-upload')">
   <div class="modal-box">
     <button onclick="closeModal('modal-upload')" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
     <h2 class="text-2xl font-bold mb-1">Upload Konten</h2>
     <p class="text-sm text-gray-400 mb-6">Tambah file konten ke platform</p>
-
+ 
     <div class="space-y-4">
       <div>
         <label class="form-label">Judul Konten *</label>
@@ -541,7 +459,7 @@
           <button onclick="clearMainFile()" class="text-gray-400 hover:text-red-500 text-sm"><i class="fas fa-times"></i></button>
         </div>
       </div>
-
+ 
       <!-- URL Sisipan (opsional) -->
       <div>
         <label class="form-label">Sisipkan URL Web <span class="text-gray-400 font-normal normal-case">(opsional)</span></label>
@@ -571,7 +489,7 @@
         </div>
       </div>
     </div>
-
+ 
     <div class="flex gap-3 mt-6">
       <button onclick="closeModal('modal-upload')" class="flex-1 border-2 border-gray-200 text-black py-3 rounded-xl font-bold hover:bg-gray-50 transition">Batal</button>
       <button onclick="submitUpload()" class="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
@@ -580,14 +498,14 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===== MODAL: LINK WEB ===== -->
 <div id="modal-link" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-link')">
   <div class="modal-box">
     <button onclick="closeModal('modal-link')" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
     <h2 class="text-2xl font-bold mb-1">Tambah Link Web</h2>
     <p class="text-sm text-gray-400 mb-6">Simpan referensi website atau proyek</p>
-
+ 
     <div class="space-y-4">
       <div>
         <label class="form-label">Judul Link *</label>
@@ -636,7 +554,7 @@
         </select>
       </div>
     </div>
-
+ 
     <div class="flex gap-3 mt-6">
       <button onclick="closeModal('modal-link')" class="flex-1 border-2 border-gray-200 text-black py-3 rounded-xl font-bold hover:bg-gray-50 transition">Batal</button>
       <button onclick="submitLink()" class="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
@@ -645,7 +563,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===== MODAL: POST DISKUSI ===== -->
 <div id="modal-post" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-post')">
   <div class="modal-box">
@@ -661,7 +579,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===== MODAL: ADD PROJECT ===== -->
 <div id="modal-project" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-project')">
   <div class="modal-box">
@@ -709,7 +627,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===== MODAL: EDIT PROFIL ===== -->
 <div id="modal-editprofil" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-editprofil')">
   <div class="modal-box">
@@ -753,1177 +671,6 @@
     </div>
   </div>
 </div>
-
-<script type="module">
-// ============================
-// SUPABASE IMPORTS
-// ============================
-import {
-  supabase, getCurrentUser,
-  getProfile, updateProfile,
-  uploadAvatar as uploadAvatarFile, uploadCoverFile,
-  getCategories, addCategory,
-  getContents, addContent, updateContent, deleteContent,
-  uploadContentFile, uploadThumbnail,
-  getPosts, addPost,
-  getSaves, toggleSave,
-  addRef
-} from './supabase.js'
-
-// User yang sedang login (diisi saat init)
-let CURRENT_USER = null
-let CURRENT_PROFILE = null
-
-// ============================
-// GLOBAL CONSTANTS
-// ============================
-const fileIcons = {image:'fas fa-image',video:'fas fa-file-video',pdf:'fas fa-file-pdf',doc:'fas fa-file-word',docx:'fas fa-file-word'};
-
-// ============================
-// DATABASE (localStorage cache + Supabase)
-// ============================
-const DB = {
-  get(key) { try { return JSON.parse(localStorage.getItem('nissanex_'+key)) || null; } catch(e){ return null; } },
-  set(key, val) { localStorage.setItem('nissanex_'+key, JSON.stringify(val)); },
-  getArr(key) { return this.get(key) || []; },
-  pushArr(key, item) { const arr = this.getArr(key); arr.unshift(item); this.set(key, arr); return arr; },
-  uuid() { return crypto.randomUUID(); },
-
-  async fetchCategories() {
-    const data = await getCategories(CURRENT_USER.id)
-    this.set('categories', data.map(c => ({
-      id: c.id, name: c.title, slug: c.title?.toLowerCase(),
-      icon: c.icon || 'fas fa-folder', iconUrl: c.file_url || ''
-    })))
-    return this.getArr('categories')
-  },
-
-  async fetchContents() {
-    const data = await getContents(CURRENT_USER.id)
-    const mapped = data.map(c => ({
-      id: c.id, userId: c.user_id, categoryId: c.category_id,
-      title: c.name, description: c.description,
-      fileType: c.icon_type || 'doc', thumbUrl: c.preview_image || '',
-      views: 0, likes: 0, bookmarked: false,
-      createdAt: c.created_at
-    }))
-    this.set('contents', mapped)
-    return mapped
-  },
-
-  async fetchPosts() {
-    const data = await getPosts()
-    const mapped = data.map(p => ({
-      id: p.id, userId: p.user_id,
-      userName: p.users?.username || 'Pengguna',
-      content: p.content, likes: 0, comments: 0, shares: 0,
-      createdAt: p.created_at
-    }))
-    this.set('discussions', mapped)
-    return mapped
-  },
-
-  async fetchSaves() {
-    const data = await getSaves(CURRENT_USER.id)
-    this.set('saves', data)
-    return data
-  }
-};
-
-// ============================
-// INIT & SEED (Supabase)
-// ============================
-async function init() {
-  CURRENT_USER = await getCurrentUser()
-  if (!CURRENT_USER) {
-    window.location.href = 'auth.html'
-    return
-  }
-  CURRENT_PROFILE = await getProfile(CURRENT_USER.id)
-  await seedDataSupabase()
-  renderBeranda()
-}
-
-async function seedDataSupabase() {
-  await DB.fetchCategories()
-  await DB.fetchContents()
-  await DB.fetchPosts()
-  await DB.fetchSaves()
-
-  if (CURRENT_PROFILE) {
-    DB.set('user_profile', {
-      name: CURRENT_PROFILE.username,
-      username: CURRENT_PROFILE.username,
-      bio: CURRENT_PROFILE.bio || '',
-      location: CURRENT_PROFILE.location || '',
-      occupation: CURRENT_PROFILE.occupation || '',
-      techStack: CURRENT_PROFILE.tech_stack || '',
-      interests: CURRENT_PROFILE.interests || '',
-      avatarUrl: CURRENT_PROFILE.avatar_url || '',
-      coverUrl: CURRENT_PROFILE.cover_url || '',
-      followers: 0, following: 0,
-    })
-  }
-
-  // Keep projects & linkwebs in localStorage if not yet seeded
-  if (!DB.get('projects')) {
-    DB.set('projects', [
-      {id:'p1',userId:'u1',name:'OYBook Platform',description:'Web Novel Platform',deployUrl:'https://oybook.vercel.app',techStack:'Next.js, Supabase',status:'live',visitCount:1245,performanceScore:95,uptimePercent:99,lastDeployed: new Date(Date.now()-86400000*2).toISOString()},
-      {id:'p2',userId:'u1',name:'Portfolio Website',description:'Dark Luxury Design',deployUrl:'https://sanpelong.dev',techStack:'HTML/CSS/JS',status:'live',visitCount:532,performanceScore:88,uptimePercent:98,lastDeployed: new Date(Date.now()-86400000*7).toISOString()},
-      {id:'p3',userId:'u1',name:'Rangership Game',description:'Space Flight Simulator',deployUrl:'',techStack:'Godot 4, GDScript',status:'development',visitCount:0,performanceScore:72,uptimePercent:0,lastDeployed:null},
-    ])
-  }
-}
-
-// Legacy seedData (tidak lagi digunakan, digantikan init())
-function seedData() { /* no-op — data dimuat dari Supabase via init() */ }
-
-// ============================
-// TEMP FILE STORAGE
-// ============================
-let tempFiles = { main:null, thumb:null, linkIcon:null };
-
-// ============================
-// NAVIGATION
-// ============================
-function navigateTo(pageId) {
-  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-  const target = document.getElementById('page-'+pageId);
-  if (target) target.classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(l => {
-    l.classList.remove('active');
-    if (l.dataset.page === pageId) l.classList.add('active');
-  });
-  if (window.innerWidth < 1024) {
-    document.getElementById('sidebar').classList.add('-translate-x-full');
-    document.getElementById('overlay').classList.add('hidden');
-  }
-  window.scrollTo({top:0,behavior:'smooth'});
-  renderPage(pageId);
-}
-
-function renderPage(pageId) {
-  const map = {
-    beranda: renderBeranda,
-    kategori: renderKategori,
-    tren: renderTren,
-    disimpan: renderDisimpan,
-    diskusi: renderDiskusi,
-    analyst: renderAnalyst,
-    profil: renderProfil,
-    pengaturan: renderPengaturan,
-  };
-  if (map[pageId]) map[pageId]();
-}
-
-function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  const ov = document.getElementById('overlay');
-  sb.classList.toggle('-translate-x-full');
-  ov.classList.toggle('hidden');
-}
-
-// ============================
-// RENDER FUNCTIONS
-// ============================
-function renderBeranda() {
-  // Category icons
-  const cats = DB.getArr('categories');
-  const iconGrid = document.getElementById('category-icons');
-  iconGrid.innerHTML = cats.map(c => `
-    <div onclick="navigateTo('kategori')" class="aspect-square bg-black rounded-2xl shadow hover:scale-105 hover:bg-zinc-900 transition-all cursor-pointer flex flex-col items-center justify-center text-white p-2 gap-1">
-      ${c.iconUrl ? `<img src="${c.iconUrl}" class="w-7 h-7 object-cover rounded">` : `<i class="${c.icon} text-xl text-gray-300"></i>`}
-      <span class="text-xs font-medium">${c.name}</span>
-    </div>
-  `).join('');
-
-  // Content grid
-  const contents = DB.getArr('contents');
-  const grid = document.getElementById('beranda-content-grid');
-  if (!contents.length) {
-    grid.innerHTML = `<div class="col-span-6 text-center py-12 text-gray-400"><i class="fas fa-folder-open text-4xl mb-3 block text-gray-200"></i><p>Belum ada konten. Upload pertama Anda!</p></div>`;
-    return;
-  }
-  grid.innerHTML = contents.slice(0,6).map(c => contentCard(c)).join('');
-}
-
-function contentCard(c) {
-  const fileIcons = {image:'fas fa-image',video:'fas fa-video',pdf:'fas fa-file-pdf',doc:'fas fa-file-word',docx:'fas fa-file-word'};
-  const fileIcon = fileIcons[c.fileType] || 'fas fa-file';
-  return `
-    <div>
-      <!-- Card - hanya thumbnail -->
-      <div class="content-card group cursor-pointer" onclick="showContentDetail('${c.id}')" onmouseenter="showCardDesc(this)" onmouseleave="hideCardDesc(this)">
-        <div class="content-thumb bg-zinc-900 relative">
-          ${c.thumbUrl ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover absolute inset-0">` : ''}
-          <div class="absolute inset-0 flex items-center justify-center">
-            <i class="${fileIcon} text-3xl ${c.thumbUrl?'opacity-0 group-hover:opacity-60':'opacity-40'} transition text-white"></i>
-          </div>
-          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center">
-            <i class="fas fa-eye text-white opacity-0 group-hover:opacity-100 transition text-3xl"></i>
-          </div>
-          <button onclick="event.stopPropagation();toggleBookmark('${c.id}')" class="absolute top-2 right-2 w-8 h-8 rounded-lg bg-black/50 flex items-center justify-center text-white text-sm hover:bg-black transition">
-            <i class="${c.bookmarked?'fas':'far'} fa-bookmark"></i>
-          </button>
-        </div>
-        
-        <!-- Description Overlay - INSIDE card, muncul saat hover -->
-        <div class="content-desc-overlay">
-          <p>${c.description || 'Tidak ada deskripsi'}</p>
-        </div>
-      </div>
-      
-      <!-- Title & Stats - OUTSIDE card -->
-      <div class="content-info">
-        <h3 title="${c.title}">${c.title}</h3>
-        <p>${c.views} views · ${c.likes} suka</p>
-      </div>
-    </div>
-  `;
-}
-
-function renderKategori() {
-  const cats = DB.getArr('categories');
-  const pills = document.getElementById('cat-filter-pills');
-  let activeCat = null;
-
-  function renderPills(selected) {
-    activeCat = selected;
-    pills.innerHTML = `
-      <button onclick="filterKategori(null)" class="px-4 py-2 rounded-full text-sm font-bold border-2 transition ${!selected?'bg-black text-white border-black':'border-gray-300 text-gray-600 hover:border-black'}">
-        Semua
-      </button>
-      ${cats.map(c=>`
-        <button onclick="filterKategori('${c.id}')" class="px-4 py-2 rounded-full text-sm font-bold border-2 transition flex items-center gap-2 ${selected===c.id?'bg-black text-white border-black':'border-gray-300 text-gray-600 hover:border-black'}">
-          ${c.iconUrl ? `<img src="${c.iconUrl}" class="w-4 h-4 rounded">` : `<i class="${c.icon}"></i>`}
-          ${c.name}
-        </button>
-      `).join('')}
-    `;
-  }
-
-  window.filterKategori = function(catId) {
-    renderPills(catId);
-    const contents = DB.getArr('contents').filter(c => !catId || c.categoryId===catId);
-    const links = DB.getArr('linkwebs').filter(l => !catId || l.categoryId===catId);
-    const label = catId ? cats.find(c=>c.id===catId)?.name : 'Semua';
-    document.getElementById('cat-result-label').textContent = label+' — Konten';
-    document.getElementById('kategori-content-grid').innerHTML = contents.length
-      ? contents.map(c=>contentCard(c)).join('')
-      : `<div class="col-span-4 text-gray-400 py-8 text-sm">Belum ada konten di kategori ini.</div>`;
-    document.getElementById('kategori-links-grid').innerHTML = links.length
-      ? `<p class="col-span-2 text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Link Web</p>`+links.map(l=>linkCard(l)).join('')
-      : '';
-  };
-
-  renderPills(null);
-  window.filterKategori(null);
-}
-
-function linkCard(l) {
-  const statusBadge = {active:'badge-green',development:'badge-yellow',archived:'badge-blue'}[l.status]||'badge-blue';
-  const statusLabel = {active:'Live',development:'Dev',archived:'Arsip'}[l.status]||l.status;
-  return `
-    <div class="link-card" onclick="window.open('${l.url}','_blank')">
-      <div class="link-icon">
-        ${l.iconUrl ? `<img src="${l.iconUrl}" class="w-full h-full object-cover rounded-xl">` : `<i class="fas fa-globe text-gray-400"></i>`}
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-0.5">
-          <p class="font-bold text-black text-sm truncate">${l.title}</p>
-          <span class="badge ${statusBadge} flex-shrink-0">${statusLabel}</span>
-        </div>
-        <p class="text-xs text-gray-400 truncate">${l.url}</p>
-        ${l.description ? `<p class="text-xs text-gray-600 mt-1 line-clamp-1">${l.description}</p>` : ''}
-      </div>
-      <i class="fas fa-external-link-alt text-gray-300 text-sm flex-shrink-0"></i>
-    </div>
-  `;
-}
-
-function renderTren() {
-  const contents = DB.getArr('contents').sort((a,b)=>b.views-a.views);
-  const el = document.getElementById('tren-list');
-  if (!contents.length) {
-    el.innerHTML = `<div class="text-center py-16 text-gray-400"><i class="fas fa-chart-line text-5xl mb-3 block text-gray-200"></i><p>Belum ada konten trending.</p></div>`;
-    return;
-  }
-  el.innerHTML = contents.map((c,i) => `
-    <div class="bg-white rounded-2xl border border-gray-100 p-5 flex gap-5 items-center hover:shadow-md transition cursor-pointer" onclick="showContentDetail('${c.id}')">
-      <span class="rank-num w-8 text-center">${i+1}</span>
-      <div class="w-14 h-14 rounded-xl bg-zinc-900 flex items-center justify-center flex-shrink-0 overflow-hidden">
-        ${c.thumbUrl ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover">` : `<i class="fas fa-file text-gray-600"></i>`}
-      </div>
-      <div class="flex-1 min-w-0">
-        <p class="font-bold text-black truncate">${c.title}</p>
-        <p class="text-sm text-gray-500 mt-0.5">${c.description||''}</p>
-        <div class="flex gap-4 mt-2 text-xs text-gray-400">
-          <span><i class="fas fa-eye mr-1"></i>${c.views}</span>
-          <span><i class="fas fa-heart mr-1"></i>${c.likes}</span>
-        </div>
-      </div>
-      <button onclick="event.stopPropagation();toggleBookmark('${c.id}')" class="text-gray-300 hover:text-black transition">
-        <i class="${c.bookmarked?'fas text-black':'far'} fa-bookmark text-lg"></i>
-      </button>
-    </div>
-  `).join('');
-}
-
-function renderDisimpan() {
-  const contents = DB.getArr('contents').filter(c=>c.bookmarked);
-  const links = DB.getArr('linkwebs').filter(l=>l.bookmarked);
-  const grid = document.getElementById('disimpan-grid');
-  const empty = document.getElementById('disimpan-empty');
-  const all = [...contents, ...links];
-  if (!all.length) { grid.innerHTML=''; empty.classList.remove('hidden'); return; }
-  empty.classList.add('hidden');
-  grid.innerHTML = [
-    ...contents.map(c=>contentCard(c)),
-    ...links.map(l=>`<div class="col-span-1">${linkCard(l)}</div>`)
-  ].join('');
-}
-
-function renderDiskusi() {
-  const posts = DB.getArr('discussions');
-  const list = document.getElementById('diskusi-list');
-  const empty = document.getElementById('diskusi-empty');
-  if (!posts.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
-  empty.classList.add('hidden');
-  list.innerHTML = posts.map(p => `
-    <div class="post-item">
-      <div class="flex gap-4 mb-3">
-        <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">${p.userName[0]}</div>
-        <div class="flex-1">
-          <p class="font-bold text-black">${p.userName}</p>
-          <p class="text-xs text-gray-400">${timeAgo(p.createdAt)}</p>
-        </div>
-      </div>
-      <p class="text-gray-700 mb-4 leading-relaxed text-sm pl-14">${p.content}</p>
-      <div class="flex gap-4 text-sm text-gray-500 pl-14">
-        <button onclick="likePost('${p.id}')" class="flex items-center gap-1.5 hover:text-red-500 transition">
-          <i class="fas fa-heart"></i><span>${p.likes}</span>
-        </button>
-        <button class="flex items-center gap-1.5 hover:text-black transition">
-          <i class="fas fa-comment"></i><span>${p.comments}</span>
-        </button>
-        <button class="flex items-center gap-1.5 hover:text-black transition">
-          <i class="fas fa-share"></i><span>${p.shares}</span>
-        </button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderAnalyst() {
-  const projects = DB.getArr('projects');
-  const list = document.getElementById('projects-list');
-  const perfList = document.getElementById('perf-list');
-
-  if (!projects.length) {
-    list.innerHTML = `<p class="text-gray-400 text-sm py-4 text-center">Belum ada project. Tambah yang pertama!</p>`;
-    perfList.innerHTML = '';
-  } else {
-    list.innerHTML = projects.map(p => {
-      const s = {live:'badge-green',development:'badge-yellow',archived:'badge-blue'}[p.status]||'badge-blue';
-      const sl = {live:'✓ Live',development:'⏳ Dev',archived:'Arsip'}[p.status]||p.status;
-      return `
-        <div class="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition">
-          <div class="flex items-start justify-between mb-1">
-            <div>
-              <p class="font-bold text-black">${p.name}</p>
-              <p class="text-sm text-gray-500">${p.description}</p>
-            </div>
-            <span class="badge ${s}">${sl}</span>
-          </div>
-          <p class="text-xs text-gray-400 mb-3">${p.techStack||''}</p>
-          <div class="flex gap-2">
-            ${p.deployUrl ? `<a href="${p.deployUrl}" target="_blank" class="text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition font-bold">Lihat</a>` : ''}
-            <button onclick="deleteProject('${p.id}')" class="text-xs border border-red-200 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition font-bold">Hapus</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    perfList.innerHTML = projects.map(p => `
-      <div>
-        <div class="flex justify-between mb-1.5">
-          <p class="text-sm font-bold text-black">${p.name}</p>
-          <p class="text-sm font-bold text-black">${p.performanceScore}%</p>
-        </div>
-        <div class="progress"><div class="progress-bar" style="width:${p.performanceScore}%"></div></div>
-      </div>
-    `).join('');
-  }
-
-  // Stats
-  const live = projects.filter(p=>p.status==='live');
-  const dev = projects.filter(p=>p.status==='development');
-  document.getElementById('stat-total').textContent = projects.length;
-  document.getElementById('stat-live').textContent = live.length;
-  document.getElementById('stat-dev').textContent = dev.length;
-  document.getElementById('stat-visits').textContent = projects.reduce((a,p)=>a+p.visitCount,0).toLocaleString();
-  const avgPerf = projects.length ? Math.round(projects.reduce((a,p)=>a+p.performanceScore,0)/projects.length) : 0;
-  const avgUptime = live.length ? (live.reduce((a,p)=>a+p.uptimePercent,0)/live.length).toFixed(0)+'%' : '—';
-  document.getElementById('stat-avgperf').textContent = projects.length ? avgPerf+'%' : '—';
-  document.getElementById('stat-uptime').textContent = avgUptime;
-}
-
-function renderProfil() {
-  const profile = DB.get('user_profile') || {};
-  const contents = DB.getArr('contents');
-  const discussions = DB.getArr('discussions');
-
-  // Profile info
-  document.getElementById('profil-name').textContent = profile.name || 'San Pelong';
-  document.getElementById('profil-username').textContent = '@'+(profile.username||'sanpelong');
-  document.getElementById('profil-bio').textContent = profile.bio || '';
-  document.getElementById('info-location').textContent = profile.location || '';
-  document.getElementById('info-occupation').textContent = profile.occupation || '';
-  document.getElementById('info-techstack').textContent = profile.techStack || '';
-  document.getElementById('info-interests').textContent = profile.interests || '';
-
-  // Avatar
-  if (profile.avatarUrl) {
-    document.getElementById('avatar-img').src = profile.avatarUrl;
-    document.getElementById('avatar-img').classList.remove('hidden');
-    document.getElementById('avatar-initial').classList.add('hidden');
-  } else {
-    document.getElementById('avatar-initial').textContent = (profile.name||'S')[0].toUpperCase();
-    document.getElementById('avatar-img').classList.add('hidden');
-    document.getElementById('avatar-initial').classList.remove('hidden');
-  }
-  if (profile.coverUrl) {
-    const coverImg = document.getElementById('cover-img');
-    coverImg.src = profile.coverUrl;
-    coverImg.classList.remove('hidden');
-  }
-
-  // Stats
-  document.getElementById('stat-followers').textContent = profile.followers || 0;
-  document.getElementById('stat-following').textContent = profile.following || 0;
-  document.getElementById('stat-posts').textContent = contents.length;
-  document.getElementById('stat-likes-total').textContent = contents.reduce((a,c)=>a+c.likes,0);
-  document.getElementById('stat-comments').textContent = discussions.reduce((a,d)=>a+d.comments,0);
-  document.getElementById('stat-shares').textContent = discussions.reduce((a,d)=>a+d.shares,0);
-
-  // Recent uploads
-  renderRecentUploads();
-
-  // Activity
-  const actEl = document.getElementById('profil-activity');
-  const allDisc = DB.getArr('discussions').filter(d=>d.userId==='u1');
-  if (!allDisc.length) {
-    actEl.innerHTML = `<p class="text-gray-400 text-sm py-6 text-center">Belum ada aktivitas.</p>`;
-  } else {
-    actEl.innerHTML = allDisc.map(d => `
-      <div class="post-item">
-        <div class="flex gap-4 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">${(profile.name||'S')[0]}</div>
-          <div>
-            <p class="font-bold text-black">${profile.name||'San Pelong'}</p>
-            <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
-          </div>
-        </div>
-        <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14">${d.content}</p>
-        <div class="flex gap-4 text-sm text-gray-500 pl-14">
-          <span><i class="fas fa-heart mr-1"></i>${d.likes}</span>
-          <span><i class="fas fa-comment mr-1"></i>${d.comments}</span>
-          <span><i class="fas fa-share mr-1"></i>${d.shares}</span>
-        </div>
-      </div>
-    `).join('');
-  }
-}
-
-function renderRecentUploads() {
-  const contents = DB.getArr('contents').slice(0,3);
-  const links = DB.getArr('linkwebs').slice(0,2);
-  const el = document.getElementById('recent-uploads');
-  const fileIcons = {image:'fas fa-file-image text-orange-400',video:'fas fa-file-video text-purple-400',pdf:'fas fa-file-pdf text-red-400',doc:'fas fa-file-word text-blue-400'};
-  const all = [
-    ...contents.map(c=>({icon:fileIcons[c.fileType]||'fas fa-file text-gray-400',name:c.title,size:c.fileType?.toUpperCase()||'FILE',type:'content'})),
-    ...links.map(l=>({icon:'fas fa-link text-green-500',name:l.title,size:'LINK',type:'link'})),
-  ].slice(0,4);
-  if (!all.length) { el.innerHTML = `<p class="text-xs text-gray-400">Belum ada upload</p>`; return; }
-  el.innerHTML = all.map(f=>`
-    <div class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
-      <i class="${f.icon} w-5 text-center"></i>
-      <p class="text-xs text-gray-700 flex-1 truncate">${f.name}</p>
-      <span class="text-xs text-gray-400 flex-shrink-0">${f.size}</span>
-    </div>
-  `).join('');
-}
-
-function renderPengaturan() {
-  const dbStats = document.getElementById('db-stats');
-  const contents = DB.getArr('contents');
-  const links = DB.getArr('linkwebs');
-  const projects = DB.getArr('projects');
-  const discussions = DB.getArr('discussions');
-  const cats = DB.getArr('categories');
-  dbStats.innerHTML = [
-    ['Konten Upload', contents.length, 'fas fa-file-alt text-blue-500'],
-    ['Link Web', links.length, 'fas fa-link text-green-500'],
-    ['Projects', projects.length, 'fas fa-rocket text-purple-500'],
-    ['Diskusi', discussions.length, 'fas fa-comments text-yellow-500'],
-    ['Kategori', cats.length, 'fas fa-th-large text-gray-500'],
-  ].map(([label,count,icon])=>`
-    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-      <div class="flex items-center gap-3">
-        <i class="${icon}"></i>
-        <span class="text-sm font-bold">${label}</span>
-      </div>
-      <span class="font-bold text-black">${count}</span>
-    </div>
-  `).join('');
-}
-
-// ============================
-// ACTIONS
-// ============================
-async function toggleBookmark(contentId) {
-  const saved = await toggleSave(CURRENT_USER.id, contentId, 'content')
-  const contents = DB.getArr('contents')
-  const idx = contents.findIndex(c => c.id === contentId)
-  if (idx >= 0) {
-    contents[idx].bookmarked = saved
-    DB.set('contents', contents)
-  }
-  toast(saved ? '🔖 Disimpan ke koleksi' : 'Dihapus dari koleksi')
-  renderPage(getCurrentPage())
-}
-
-function likePost(postId) {
-  const posts = DB.getArr('discussions');
-  const idx = posts.findIndex(p=>p.id===postId);
-  if (idx>=0) { posts[idx].likes++; DB.set('discussions', posts); renderDiskusi(); }
-}
-
-function showContentDetail(id) {
-  const contents = DB.getArr('contents');
-  const c = contents.find(c=>c.id===id);
-  if (!c) return;
-
-  // increment views
-  const idx = contents.findIndex(cc=>cc.id===id);
-  if(idx>=0){contents[idx].views++;DB.set('contents',contents);}
-
-  // init comments & ratings jika belum ada
-  if (!c.comments) { contents[idx].comments = []; DB.set('contents',contents); }
-  if (!c.ratings)  { contents[idx].ratings  = []; DB.set('contents',contents); }
-
-  const comments = DB.getArr('contents').find(cc=>cc.id===id).comments || [];
-  const ratings  = DB.getArr('contents').find(cc=>cc.id===id).ratings  || [];
-  const avgRating = ratings.length ? (ratings.reduce((a,b)=>a+b.score,0)/ratings.length).toFixed(1) : null;
-  const fileMetaExtra = c.fileName
-    ? `<div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-400 mb-0.5">Nama File</p><p class="text-sm font-semibold text-black truncate">${c.fileName}</p></div>
-       <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-400 mb-0.5">Ukuran</p><p class="text-sm font-semibold text-black">${c.fileSize ? formatSize(c.fileSize) : '-'}</p></div>`
-    : '';
-
-  const webUrlBlock = c.webUrl
-    ? `<a href="${c.webUrl}" target="_blank" rel="noopener" class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-700 hover:bg-blue-100 transition"><i class="fas fa-external-link-alt"></i><span class="truncate flex-1">${c.webUrl}</span><span class="text-xs font-semibold flex-shrink-0">Buka →</span></a>`
-    : '';
-
-  const pdfOpenBtn = c.fileType === 'pdf'
-    ? `<button onclick="togglePdfViewer('${c.id}')" class="flex-1 flex items-center justify-center gap-2 bg-black text-white text-sm py-3 rounded-xl font-semibold hover:bg-gray-800 transition"><i class="fas fa-file-pdf"></i> Buka PDF</button>`
-    : '';
-
-  const pdfViewerBlock = c.fileType === 'pdf'
-    ? `<div id="pdf-viewer-${c.id}" class="hidden mb-6"><div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold text-black">Preview PDF</span><button onclick="togglePdfViewer('${c.id}')" class="text-xs text-gray-400 hover:text-black"><i class="fas fa-times"></i> Tutup</button></div><iframe src="${c.fileData}" class="w-full rounded-2xl border border-gray-200" style="height:70vh;" title="${c.title}"></iframe></div>`
-    : '';
-
-  const fileActionsBlock = c.fileData
-    ? `<div class="flex gap-3 mb-4">${pdfOpenBtn}<button onclick="downloadContent('${c.id}')" class="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-black text-sm py-3 rounded-xl font-semibold hover:bg-gray-200 transition"><i class="fas fa-download"></i> Download</button></div>${pdfViewerBlock}`
-    : `<div class="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-4 text-sm text-yellow-700"><i class="fas fa-info-circle"></i><span>Konten ini tidak memiliki file yang diunggah.</span></div>`;
-
-
-
-  const stars = (score, interactive=false, name='') => [1,2,3,4,5].map(i=>
-    interactive
-      ? `<i class="${i<=score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg" onmouseover="hoverStar(this,${i})" onmouseout="resetStars('${name}')" onclick="setStar('${name}',${i})"></i>`
-      : `<i class="${i<=Math.round(score)?'fas':'far'} fa-star text-yellow-400 text-sm"></i>`
-  ).join('');
-
-  const commentsHtml = comments.length
-    ? comments.map(cm=>`
-        <div class="flex gap-3 py-4 border-b border-gray-100 last:border-0">
-          <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${cm.author.charAt(0).toUpperCase()}</div>
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-sm font-semibold text-black">${cm.author}</span>
-              <div class="flex">${stars(cm.rating)}</div>
-              <span class="text-xs text-gray-400 ml-auto">${new Date(cm.date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>
-            </div>
-            <p class="text-sm text-gray-600 leading-relaxed">${cm.text}</p>
-          </div>
-        </div>`).join('')
-    : `<div class="text-center py-10 text-gray-400"><i class="far fa-comment-dots text-3xl mb-2 block"></i><p class="text-sm">Belum ada komentar. Jadilah yang pertama!</p></div>`;
-
-  const html = `
-    <div id="content-detail-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeContentDetail()">
-      <div class="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
-
-        <!-- Header bar -->
-        <div class="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
-          <button onclick="closeContentDetail()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-            <i class="fas fa-arrow-left text-sm text-gray-700"></i>
-          </button>
-          <span class="text-xs font-medium text-gray-400 uppercase tracking-widest">${c.fileType || 'Konten'}</span>
-          <button onclick="toggleBookmark('${c.id}');closeContentDetail();showContentDetail('${c.id}')" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-            <i class="${c.bookmarked?'fas text-black':'far text-gray-400'} fa-bookmark text-sm"></i>
-          </button>
-        </div>
-
-        <!-- Scrollable body -->
-        <div class="overflow-y-auto flex-1 px-5 pb-8">
-
-          <!-- Cover / Sampul -->
-          <div class="w-full aspect-[3/2] rounded-2xl overflow-hidden bg-zinc-900 flex items-center justify-center mb-5 relative">
-            ${c.thumbUrl
-              ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover">`
-              : `<i class="${fileIcon} text-6xl text-white opacity-30"></i>`}
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <div class="absolute bottom-4 left-4 right-4">
-              <h2 class="text-white text-xl font-bold leading-tight drop-shadow">${c.title}</h2>
-            </div>
-          </div>
-
-          <!-- Rating ringkas -->
-          <div class="flex items-center gap-3 mb-4">
-            ${avgRating
-              ? `<div class="flex items-center gap-1.5">
-                  <span class="text-2xl font-bold text-black">${avgRating}</span>
-                  <div class="flex flex-col gap-0.5">
-                    <div class="flex">${stars(avgRating)}</div>
-                    <span class="text-xs text-gray-400">${ratings.length} ulasan</span>
-                  </div>
-                </div>`
-              : `<span class="text-sm text-gray-400 italic">Belum ada penilaian</span>`}
-            <div class="ml-auto flex items-center gap-3 text-sm text-gray-500">
-              <span><i class="fas fa-eye mr-1 text-gray-400"></i>${c.views}</span>
-              <span><i class="fas fa-heart mr-1 text-red-400"></i>${c.likes}</span>
-            </div>
-          </div>
-
-          <!-- Deskripsi -->
-          <div class="mb-6">
-            <h3 class="text-sm font-semibold text-black mb-2">Tentang Konten</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">${c.description || 'Tidak ada deskripsi tersedia.'}</p>
-          </div>
-
-          <!-- Info meta -->
-          <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-gray-50 rounded-xl p-3">
-              <p class="text-xs text-gray-400 mb-0.5">Tipe File</p>
-              <p class="text-sm font-semibold text-black uppercase">${c.fileType || '-'}</p>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-3">
-              <p class="text-xs text-gray-400 mb-0.5">Diunggah</p>
-              <p class="text-sm font-semibold text-black">${new Date(c.createdAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-            </div>
-            ${fileMetaExtra}
-          </div>
-
-          <!-- Tombol Aksi File -->
-          ${webUrlBlock}
-          ${fileActionsBlock}
-
-          <!-- Beri Rating -->
-          <div class="bg-gray-50 rounded-2xl p-4 mb-6">
-            <h3 class="text-sm font-semibold text-black mb-3">Beri Penilaian</h3>
-            <div id="star-input-${c.id}" data-score="0" class="flex gap-1 mb-3">
-              ${stars(0, true, c.id)}
-            </div>
-            <input id="comment-author-${c.id}" type="text" placeholder="Nama kamu" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none mb-2 bg-white">
-            <textarea id="comment-text-${c.id}" placeholder="Tulis komentar..." rows="3" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none resize-none bg-white mb-3"></textarea>
-            <button onclick="submitComment('${c.id}')" class="w-full bg-black text-white text-sm py-2.5 rounded-xl font-semibold hover:bg-gray-800 transition">
-              Kirim Komentar
-            </button>
-          </div>
-
-          <!-- Komentar -->
-          <div>
-            <h3 class="text-sm font-semibold text-black mb-1">Komentar <span class="text-gray-400 font-normal">(${comments.length})</span></h3>
-            <div id="comments-list-${c.id}">
-              ${commentsHtml}
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>`;
-
-  document.body.insertAdjacentHTML('beforeend', html);
-}
-
-function togglePdfViewer(contentId) {
-  const viewer = document.getElementById(`pdf-viewer-${contentId}`);
-  if (!viewer) return;
-  viewer.classList.toggle('hidden');
-  if (!viewer.classList.contains('hidden')) {
-    viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-function downloadContent(contentId) {
-  const c = DB.getArr('contents').find(c => c.id === contentId);
-  if (!c || !c.fileData) { toast('⚠️ Tidak ada file untuk diunduh'); return; }
-  const a = document.createElement('a');
-  a.href = c.fileData;
-  a.download = c.fileName || c.title;
-  a.click();
-  toast('⬇️ Mengunduh file...');
-}
-
-function closeContentDetail() {
-  const modal = document.getElementById('content-detail-modal');
-  if (modal) modal.remove();
-}
-
-function hoverStar(el, score) {
-  const container = el.parentElement;
-  [...container.querySelectorAll('i')].forEach((s,i)=>{
-    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
-  });
-}
-
-function resetStars(contentId) {
-  const container = document.getElementById(`star-input-${contentId}`);
-  if (!container) return;
-  const score = parseInt(container.dataset.score)||0;
-  [...container.querySelectorAll('i')].forEach((s,i)=>{
-    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
-  });
-}
-
-function setStar(contentId, score) {
-  const container = document.getElementById(`star-input-${contentId}`);
-  if (!container) return;
-  container.dataset.score = score;
-  [...container.querySelectorAll('i')].forEach((s,i)=>{
-    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
-  });
-}
-
-function submitComment(contentId) {
-  const author = document.getElementById(`comment-author-${contentId}`).value.trim();
-  const text   = document.getElementById(`comment-text-${contentId}`).value.trim();
-  const score  = parseInt(document.getElementById(`star-input-${contentId}`)?.dataset.score)||0;
-
-  if (!author) { toast('⚠️ Masukkan nama kamu'); return; }
-  if (!text)   { toast('⚠️ Tulis komentar dulu'); return; }
-  if (!score)  { toast('⚠️ Beri bintang dulu'); return; }
-
-  const contents = DB.getArr('contents');
-  const idx = contents.findIndex(c=>c.id===contentId);
-  if (idx<0) return;
-
-  if (!contents[idx].comments) contents[idx].comments = [];
-  if (!contents[idx].ratings)  contents[idx].ratings  = [];
-
-  contents[idx].comments.unshift({ author, text, rating: score, date: new Date().toISOString() });
-  contents[idx].ratings.push({ score });
-  DB.set('contents', contents);
-
-  closeContentDetail();
-  showContentDetail(contentId);
-  toast('✅ Komentar berhasil dikirim!');
-}
-
-// ============================
-// SEARCH
-// ============================
-function handleSearch(q) {
-  if (!q.trim()) return;
-  const contents = DB.getArr('contents').filter(c=>c.title.toLowerCase().includes(q.toLowerCase()));
-  const links = DB.getArr('linkwebs').filter(l=>l.title.toLowerCase().includes(q.toLowerCase()));
-  // Just navigate to kategori and show results
-  toast(`${contents.length+links.length} hasil ditemukan`);
-}
-
-// ============================
-// UPLOAD KONTEN
-// ============================
-function setUploadTab(tab) {
-  document.getElementById('tab-konten').classList.toggle('active', tab==='konten');
-  document.getElementById('tab-linkweb').classList.toggle('active', tab==='linkweb');
-  document.getElementById('upload-konten-panel').classList.toggle('hidden', tab!=='konten');
-  document.getElementById('upload-linkweb-panel').classList.toggle('hidden', tab!=='linkweb');
-}
-
-function handleMiniFile(input) {
-  if (!input.files[0]) return;
-  tempFiles.main = input.files[0];
-  const el = document.getElementById('mini-file-preview');
-  el.classList.remove('hidden');
-  document.getElementById('mini-file-name').textContent = input.files[0].name;
-  document.getElementById('mini-file-size').textContent = formatSize(input.files[0].size);
-}
-
-function handleMiniDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('hover');
-  const f = e.dataTransfer.files[0];
-  if (f) { tempFiles.main = f; document.getElementById('mini-file').files = e.dataTransfer.files; handleMiniFile({files:[f]}); }
-}
-
-function clearMiniFile() {
-  tempFiles.main = null;
-  document.getElementById('mini-file-preview').classList.add('hidden');
-  document.getElementById('mini-file').value = '';
-}
-
-function handleMainFile(input) {
-  if (!input.files[0]) return;
-  tempFiles.main = input.files[0];
-  document.getElementById('main-file-info').classList.remove('hidden');
-  document.getElementById('main-file-name').textContent = input.files[0].name;
-  document.getElementById('main-file-size').textContent = formatSize(input.files[0].size);
-  const ext = input.files[0].name.split('.').pop().toLowerCase();
-  const icons = {png:'fas fa-file-image text-orange-400',jpg:'fas fa-file-image text-orange-400',jpeg:'fas fa-file-image text-orange-400',gif:'fas fa-file-image text-orange-400',webp:'fas fa-file-image text-orange-400',mp4:'fas fa-file-video text-purple-400',pdf:'fas fa-file-pdf text-red-400',doc:'fas fa-file-word text-blue-400',docx:'fas fa-file-word text-blue-400'};
-  document.getElementById('main-file-icon').className = icons[ext] || 'fas fa-file text-gray-400';
-  document.getElementById('main-file-icon').className += ' text-xl';
-}
-
-function handleMainDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('hover');
-  const f = e.dataTransfer.files[0];
-  if (f) { tempFiles.main = f; handleMainFile({files:[f]}); }
-}
-
-function clearMainFile() {
-  tempFiles.main = null;
-  document.getElementById('main-file-info').classList.add('hidden');
-}
-
-function handleThumbFile(input) {
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    tempFiles.thumb = e.target.result;
-    document.getElementById('thumb-preview').src = e.target.result;
-    document.getElementById('thumb-preview').classList.remove('hidden');
-    document.getElementById('thumb-icon-placeholder').classList.add('hidden');
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function handleLinkIcon(input) {
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    tempFiles.linkIcon = e.target.result;
-    document.getElementById('lk-icon-preview').src = e.target.result;
-    document.getElementById('lk-icon-preview').classList.remove('hidden');
-    document.getElementById('lk-icon-placeholder').classList.add('hidden');
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-async function submitUpload() {
-  const title = document.getElementById('up-title').value.trim();
-  const catId = document.getElementById('up-category').value;
-  const desc  = document.getElementById('up-desc').value.trim();
-  if (!title) { toast('⚠️ Judul wajib diisi!'); return; }
-
-  let fileUrl = null, thumbUrl = null, fileType = 'doc';
-
-  if (tempFiles.main) {
-    const ext = tempFiles.main.name.split('.').pop().toLowerCase();
-    const typeMap = {png:'image',jpg:'image',jpeg:'image',gif:'image',webp:'image',mp4:'video',pdf:'pdf',doc:'doc',docx:'docx'};
-    fileType = typeMap[ext] || 'doc';
-    toast('⏳ Mengupload file...');
-    fileUrl = await uploadContentFile(CURRENT_USER.id, tempFiles.main);
-  }
-
-  if (tempFiles.thumbFile) {
-    thumbUrl = await uploadThumbnail(CURRENT_USER.id, tempFiles.thumbFile);
-  }
-
-  const content = await addContent(CURRENT_USER.id, {
-    name: title,
-    description: desc,
-    category_id: catId || null,
-    icon_type: fileType,
-    display_url: fileUrl || document.getElementById('up-url').value.trim() || null,
-    preview_image: thumbUrl || null,
-    status: 'published'
-  });
-
-  DB.pushArr('contents', {
-    id: content.id, userId: CURRENT_USER.id, categoryId: catId,
-    title, description: desc, fileType,
-    thumbUrl: thumbUrl || '', views: 0, likes: 0, bookmarked: false,
-    createdAt: content.created_at
-  });
-
-  toast('✅ Konten berhasil diupload!');
-  closeModal('modal-upload');
-  resetUploadForm();
-  renderPage(getCurrentPage());
-}
-
-async function submitLink() {
-  const title = document.getElementById('lk-title').value.trim();
-  const url   = document.getElementById('lk-url').value.trim();
-  if (!title || !url) { toast('⚠️ Judul dan URL wajib diisi!'); return; }
-
-  const ref = await addRef(CURRENT_USER.id, { theme: title, language: url });
-
-  DB.pushArr('linkwebs', {
-    id: ref.id, userId: CURRENT_USER.id,
-    categoryId: document.getElementById('lk-category').value || null,
-    title, url,
-    description: document.getElementById('lk-desc').value.trim(),
-    iconUrl: tempFiles.linkIcon || '',
-    status: document.getElementById('lk-status').value,
-    bookmarked: false,
-    createdAt: ref.created_at
-  });
-
-  toast('✅ Link web berhasil disimpan!');
-  closeModal('modal-link');
-  resetLinkForm();
-  renderPage(getCurrentPage());
-}
-
-async function submitPost() {
-  const content = document.getElementById('post-content').value.trim();
-  if (!content) { toast('⚠️ Tulis sesuatu dulu!'); return; }
-
-  const post = await addPost(CURRENT_USER.id, content);
-
-  DB.pushArr('discussions', {
-    id: post.id, userId: CURRENT_USER.id,
-    userName: CURRENT_PROFILE?.username || 'Pengguna',
-    content, likes: 0, comments: 0, shares: 0,
-    createdAt: post.created_at
-  });
-
-  document.getElementById('post-content').value = '';
-  toast('✅ Post berhasil dipublikasikan!');
-  closeModal('modal-post');
-  renderDiskusi();
-}
-
-function submitProject() {
-  const name = document.getElementById('proj-name').value.trim();
-  if (!name) { toast('⚠️ Nama project wajib diisi!'); return; }
-  const newProj = {
-    id: DB.uuid(), userId:'u1', name,
-    description: document.getElementById('proj-desc').value.trim(),
-    deployUrl: document.getElementById('proj-url').value.trim(),
-    techStack: document.getElementById('proj-tech').value.trim(),
-    status: document.getElementById('proj-status').value,
-    visitCount:0,
-    performanceScore: parseInt(document.getElementById('proj-perf').value)||80,
-    uptimePercent: parseInt(document.getElementById('proj-uptime').value)||99,
-    lastDeployed: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-  };
-  DB.pushArr('projects', newProj);
-  ['proj-name','proj-desc','proj-url','proj-tech','proj-perf','proj-uptime'].forEach(id=>document.getElementById(id).value='');
-  toast('✅ Project berhasil ditambahkan!');
-  closeModal('modal-project');
-  renderAnalyst();
-}
-
-function deleteProject(id) {
-  const projects = DB.getArr('projects').filter(p=>p.id!==id);
-  DB.set('projects', projects);
-  toast('🗑️ Project dihapus');
-  renderAnalyst();
-}
-
-async function saveEditProfil() {
-  const updates = {
-    username:   document.getElementById('ep-username').value.trim() || CURRENT_PROFILE.username,
-    bio:        document.getElementById('ep-bio').value.trim(),
-    location:   document.getElementById('ep-location').value.trim(),
-    occupation: document.getElementById('ep-occupation').value.trim(),
-    tech_stack: document.getElementById('ep-techstack').value.trim(),
-    interests:  document.getElementById('ep-interests').value.trim(),
-  };
-  CURRENT_PROFILE = await updateProfile(CURRENT_USER.id, updates);
-  DB.set('user_profile', {
-    name: CURRENT_PROFILE.username,
-    username: CURRENT_PROFILE.username,
-    bio: CURRENT_PROFILE.bio || '',
-    location: CURRENT_PROFILE.location || '',
-    occupation: CURRENT_PROFILE.occupation || '',
-    techStack: CURRENT_PROFILE.tech_stack || '',
-    interests: CURRENT_PROFILE.interests || '',
-    avatarUrl: CURRENT_PROFILE.avatar_url || '',
-    coverUrl: CURRENT_PROFILE.cover_url || '',
-    followers: 0, following: 0,
-  });
-  toast('✅ Profil berhasil diperbarui!');
-  closeModal('modal-editprofil');
-  renderProfil();
-}
-
-async function uploadAvatar(input) {
-  if (!input.files[0]) return;
-  toast('⏳ Mengupload foto...');
-  const url = await uploadAvatarFile(CURRENT_USER.id, input.files[0]);
-  await updateProfile(CURRENT_USER.id, { avatar_url: url });
-  CURRENT_PROFILE.avatar_url = url;
-  const profile = DB.get('user_profile') || {};
-  profile.avatarUrl = url;
-  DB.set('user_profile', profile);
-  toast('✅ Foto profil diperbarui!');
-  renderProfil();
-}
-
-async function uploadCover(input) {
-  if (!input.files[0]) return;
-  toast('⏳ Mengupload cover...');
-  const url = await uploadCoverFile(CURRENT_USER.id, input.files[0]);
-  await updateProfile(CURRENT_USER.id, { cover_url: url });
-  CURRENT_PROFILE.cover_url = url;
-  const profile = DB.get('user_profile') || {};
-  profile.coverUrl = url;
-  DB.set('user_profile', profile);
-  toast('✅ Cover diperbarui!');
-  renderProfil();
-}
-
-function clearAllData() {
-  if (!confirm('Yakin hapus semua data? Ini tidak bisa dibatalkan.')) return;
-  Object.keys(localStorage).filter(k=>k.startsWith('nissanex_')).forEach(k=>localStorage.removeItem(k));
-  toast('🗑️ Semua data dihapus. Refresh halaman...');
-  setTimeout(()=>location.reload(), 1500);
-}
-
-// ============================
-// MODAL HELPERS
-// ============================
-function openUploadModal() {
-  populateCategorySelects();
-  tempFiles = {main:null, thumb:null, linkIcon:null};
-  openModal('modal-upload');
-}
-
-function openLinkModal() {
-  populateCategorySelects();
-  tempFiles = {main:null, thumb:null, linkIcon:null};
-  // Reset icon preview
-  document.getElementById('lk-icon-preview').classList.add('hidden');
-  document.getElementById('lk-icon-placeholder').classList.remove('hidden');
-  openModal('modal-link');
-}
-
-function openPostModal() { openModal('modal-post'); }
-function openProjectModal() { openModal('modal-project'); }
-
-function openEditProfil() {
-  const profile = DB.get('user_profile') || {};
-  document.getElementById('ep-name').value = profile.name || '';
-  document.getElementById('ep-username').value = profile.username || '';
-  document.getElementById('ep-bio').value = profile.bio || '';
-  document.getElementById('ep-location').value = profile.location || '';
-  document.getElementById('ep-occupation').value = profile.occupation || '';
-  document.getElementById('ep-techstack').value = profile.techStack || '';
-  document.getElementById('ep-interests').value = profile.interests || '';
-  openModal('modal-editprofil');
-}
-
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-function closeModalBackdrop(e, id) { if (e.target.id===id) closeModal(id); }
-
-function populateCategorySelects() {
-  const cats = DB.getArr('categories');
-  const opts = cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  ['up-category','lk-category'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<option value="">Pilih kategori...</option>'+opts;
-  });
-}
-
-function resetUploadForm() {
-  ['up-title','up-desc','up-url'].forEach(id=>document.getElementById(id).value='');
-  clearMainFile();
-  tempFiles = {main:null, thumb:null, linkIcon:null};
-  document.getElementById('thumb-preview').classList.add('hidden');
-  document.getElementById('thumb-icon-placeholder').classList.remove('hidden');
-}
-
-function resetLinkForm() {
-  ['lk-title','lk-url','lk-desc'].forEach(id=>document.getElementById(id).value='');
-  tempFiles.linkIcon = null;
-}
-
-// ============================
-// UTILITIES
-// ============================
-function toast(msg, duration=2800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), duration);
-}
-
-function formatSize(bytes) {
-  if (bytes<1024) return bytes+'B';
-  if (bytes<1048576) return (bytes/1024).toFixed(1)+'KB';
-  return (bytes/1048576).toFixed(1)+'MB';
-}
-
-function timeAgo(dateStr) {
-  const diff = (Date.now()-new Date(dateStr).getTime())/1000;
-  if (diff<60) return 'Baru saja';
-  if (diff<3600) return Math.floor(diff/60)+'m yang lalu';
-  if (diff<86400) return Math.floor(diff/3600)+'j yang lalu';
-  if (diff<604800) return Math.floor(diff/86400)+' hari yang lalu';
-  return Math.floor(diff/604800)+' minggu yang lalu';
-}
-
-function getCurrentPage() {
-  const active = document.querySelector('.page-content.active');
-  if (!active) return 'beranda';
-  return active.id.replace('page-','');
-}
-
-// ============================
-// CARD DESCRIPTION HANDLERS
-// ============================
-let activeCardDesc = null;
-
-function showCardDesc(cardEl) {
-  const overlay = cardEl.querySelector('.content-desc-overlay');
-  if (!overlay) return;
-  
-  if (activeCardDesc && activeCardDesc !== cardEl) {
-    const prevOverlay = activeCardDesc.querySelector('.content-desc-overlay');
-    if (prevOverlay) {
-      activeCardDesc.classList.remove('active-desc');
-    }
-  }
-  
-  cardEl.classList.add('active-desc');
-  activeCardDesc = cardEl;
-}
-
-function hideCardDesc(cardEl) {
-  cardEl.classList.remove('active-desc');
-  if (activeCardDesc === cardEl) activeCardDesc = null;
-}
-
-function toggleCardDesc(cardEl) {
-  if (cardEl.classList.contains('active-desc')) {
-    hideCardDesc(cardEl);
-  } else {
-    showCardDesc(cardEl);
-  }
-  return false;
-}
-
-// ============================
-// INIT
-// ============================
-init();
-</script>
+<script src="js/menu.js"></script>
 </body>
 </html>
