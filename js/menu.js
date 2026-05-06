@@ -38,7 +38,6 @@ const DB = {
         id: c.id, name: c.title, slug: c.title?.toLowerCase(),
         icon: c.icon || 'fas fa-folder', iconUrl: c.file_url || ''
       }))
-      // Pakai data Supabase kalau ada, fallback ke DEFAULT_CATEGORIES kalau kosong
       const final = mapped.length > 0 ? mapped : DEFAULT_CATEGORIES
       this.set('categories', final)
       return final
@@ -56,7 +55,9 @@ const DB = {
         id: c.id, userId: c.user_id, categoryId: c.category_id,
         title: c.name, description: c.description,
         fileType: c.icon_type || 'doc', thumbUrl: c.preview_image || '',
-        views: 0, likes: 0, bookmarked: false,
+        fileData: c.file_url || null, fileName: c.file_name || null, fileSize: c.file_size || null,
+        webUrl: c.display_url || null,
+        views: c.views || 0, likes: c.likes || 0, bookmarked: false,
         createdAt: c.created_at
       }))
       this.set('contents', mapped)
@@ -70,7 +71,7 @@ const DB = {
       const mapped = data.map(p => ({
         id: p.id, userId: p.user_id,
         userName: p.users?.username || 'Pengguna',
-        content: p.content, likes: 0, comments: 0, shares: 0,
+        content: p.content, likes: p.likes_count || 0, comments: p.comments_count || 0, shares: p.shares_count || 0,
         createdAt: p.created_at
       }))
       this.set('discussions', mapped)
@@ -83,6 +84,11 @@ const DB = {
     try {
       const data = await window._SB.getSaves(CURRENT_USER.id)
       this.set('saves', data)
+      // Update bookmark status di contents
+      const contents = this.getArr('contents')
+      const savedIds = data.filter(s => s.target_type === 'content').map(s => s.target_id)
+      contents.forEach(c => { c.bookmarked = savedIds.includes(c.id) })
+      this.set('contents', contents)
       return data
     } catch(e) { return this.getArr('saves') }
   }
@@ -92,13 +98,11 @@ const DB = {
 // INIT & SEED (Supabase)
 // ============================
 async function init() {
-  // Tunggu module Supabase siap
   if (!window._SB_READY) {
     window._pendingInit = init
     return
   }
 
-  // Listen perubahan auth state secara realtime
   window._SB.onAuthChange(async (event, user) => {
     if (event === 'SIGNED_IN') {
       CURRENT_USER = user
@@ -133,7 +137,6 @@ async function init() {
 // ============================
 // AUTH GUARD
 // ============================
-// Halaman / aksi yang butuh login
 const AUTH_REQUIRED_PAGES = ['profil', 'disimpan', 'pengaturan']
 
 function requireAuth(action) {
@@ -145,7 +148,6 @@ function requireAuth(action) {
   }
 }
 
-// Update tampilan sidebar sesuai status login
 function updateSidebarUser() {
   const el = document.getElementById('sidebar-user-info')
   if (!el) return
@@ -211,22 +213,16 @@ function buildAuthModal() {
   <div id="modal-auth" class="modal-backdrop" onclick="if(event.target.id==='modal-auth')closeAuthModal()">
     <div class="modal-box" style="max-width:420px">
       <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
-
-      <!-- Logo -->
       <div class="flex items-center gap-3 mb-6">
         <div class="w-9 h-9 bg-black rounded-xl flex items-center justify-center">
           <span class="text-white font-bold text-lg">N</span>
         </div>
         <h1 class="text-xl font-bold brand-lora">Nissan Ex</h1>
       </div>
-
-      <!-- Tabs -->
       <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
         <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg text-sm font-bold transition active-tab">Masuk</button>
         <button id="auth-tab-reg" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-lg text-sm font-bold transition">Daftar</button>
       </div>
-
-      <!-- LOGIN PANEL -->
       <div id="auth-login-panel">
         <div class="space-y-4">
           <div>
@@ -249,8 +245,6 @@ function buildAuthModal() {
         </button>
         <p class="text-center text-sm text-gray-500 mt-4">Belum punya akun? <button onclick="switchAuthTab('register')" class="font-bold text-black underline">Daftar sekarang</button></p>
       </div>
-
-      <!-- REGISTER PANEL -->
       <div id="auth-reg-panel" class="hidden">
         <div class="space-y-4">
           <div>
@@ -296,7 +290,6 @@ async function doLogin() {
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...'
   try {
     await window._SB.signIn(email, pass)
-    // onAuthChange akan handle sisanya
   } catch(e) {
     errEl.textContent = e.message === 'Invalid login credentials' ? 'Email atau password salah.' : e.message
     errEl.classList.remove('hidden')
@@ -315,15 +308,12 @@ async function doRegister() {
   if (pass.length < 6) { errEl.textContent = 'Password minimal 6 karakter.'; errEl.classList.remove('hidden'); return }
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mendaftar...'
   try {
-    // ✅ FIXED: Handle both return structures (with or without destructure)
     const result = await window._SB.signUp(email, pass, username)
-    const user = result?.user ?? result  // Fallback jika structure berbeda
-    
+    const user = result?.user ?? result
     if (user && !user.email_confirmed_at && user.confirmed_at === null) {
       toast('✅ Cek email kamu untuk konfirmasi akun!')
       closeAuthModal()
     }
-    // Kalau email confirm disabled di Supabase, onAuthChange langsung handle
   } catch(e) {
     errEl.textContent = e.message || 'Terjadi kesalahan saat mendaftar'
     errEl.classList.remove('hidden')
@@ -362,7 +352,6 @@ async function seedDataSupabase() {
     })
   }
  
-  // Keep projects & linkwebs in localStorage if not yet seeded
   if (!DB.get('projects')) {
     DB.set('projects', [
       {id:'p1',userId:'u1',name:'OYBook Platform',description:'Web Novel Platform',deployUrl:'https://oybook.vercel.app',techStack:'Next.js, Supabase',status:'live',visitCount:1245,performanceScore:95,uptimePercent:99,lastDeployed: new Date(Date.now()-86400000*2).toISOString()},
@@ -378,19 +367,15 @@ async function seedDataSupabase() {
   }
 }
  
-// Legacy seedData (tidak lagi digunakan, digantikan init())
-function seedData() { /* no-op — data dimuat dari Supabase via init() */ }
- 
 // ============================
 // TEMP FILE STORAGE
 // ============================
-let tempFiles = { main:null, thumb:null, linkIcon:null };
+let tempFiles = { main:null, thumb:null, thumbFile:null, linkIcon:null };
  
 // ============================
 // NAVIGATION
 // ============================
 function navigateTo(pageId) {
-  // Auth guard untuk halaman tertentu
   if (AUTH_REQUIRED_PAGES.includes(pageId) && !CURRENT_USER) {
     openAuthModal()
     toast('⚠️ Login dulu untuk mengakses halaman ini')
@@ -436,7 +421,6 @@ function toggleSidebar() {
 // RENDER FUNCTIONS
 // ============================
  
-// SVG inline per kategori — tidak bergantung Font Awesome
 const CAT_SVG = {
   'cat-tech': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M6 8h.01M10 8h4"/></svg>`,
   'cat-politik': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 10v5M12 10v5M16 10v5"/></svg>`,
@@ -447,7 +431,6 @@ const CAT_SVG = {
  
 function getCatSvg(cat) {
   if (CAT_SVG[cat.id]) return CAT_SVG[cat.id];
-  // fallback generic svg
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18"/></svg>`;
 }
  
@@ -460,9 +443,9 @@ const CAT_GRADIENT = {
 };
  
 function renderBeranda() {
-  // Category icons
   const cats = DB.getArr('categories').length > 0 ? DB.getArr('categories') : DEFAULT_CATEGORIES;
   const iconGrid = document.getElementById('category-icons');
+  
   iconGrid.innerHTML = cats.map(c => {
     const grad = CAT_GRADIENT[c.id] || 'from-zinc-700 to-zinc-900';
     return `
@@ -472,15 +455,17 @@ function renderBeranda() {
       <div class="flex flex-col items-center justify-center gap-3 w-full h-full p-4 text-white" style="min-height:120px;">
         ${c.iconUrl
           ? `<img src="${c.iconUrl}" class="w-10 h-10 object-cover rounded-xl">`
-          : getCatSvg(c)}
+          : c.icon && c.icon.startsWith('fas')
+            ? `<i class="${c.icon} text-3xl"></i>`
+            : getCatSvg(c)}
         <span class="text-sm font-bold tracking-wide drop-shadow">${c.name}</span>
       </div>
     </div>`;
   }).join('');
- 
-  // Content grid
+  
   const contents = DB.getArr('contents');
   const grid = document.getElementById('beranda-content-grid');
+  
   if (!contents.length) {
     grid.innerHTML = `<div class="col-span-6 text-center py-12 text-gray-400"><i class="fas fa-folder-open text-4xl mb-3 block text-gray-200"></i><p>Belum ada konten. Upload pertama Anda!</p></div>`;
     return;
@@ -489,11 +474,10 @@ function renderBeranda() {
 }
  
 function contentCard(c) {
-  const fileIcons = {image:'fas fa-image',video:'fas fa-video',pdf:'fas fa-file-pdf',doc:'fas fa-file-word',docx:'fas fa-file-word'};
-  const fileIcon = fileIcons[c.fileType] || 'fas fa-file';
+  const fileIconsMap = {image:'fas fa-image',video:'fas fa-video',pdf:'fas fa-file-pdf',doc:'fas fa-file-word',docx:'fas fa-file-word'};
+  const fileIcon = fileIconsMap[c.fileType] || 'fas fa-file';
   return `
     <div>
-      <!-- Card - hanya thumbnail -->
       <div class="content-card group cursor-pointer" onclick="showContentDetail('${c.id}')" onmouseenter="showCardDesc(this)" onmouseleave="hideCardDesc(this)">
         <div class="content-thumb bg-zinc-900 relative">
           ${c.thumbUrl ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover absolute inset-0">` : ''}
@@ -507,14 +491,10 @@ function contentCard(c) {
             <i class="${c.bookmarked?'fas':'far'} fa-bookmark"></i>
           </button>
         </div>
-        
-        <!-- Description Overlay - INSIDE card, muncul saat hover -->
         <div class="content-desc-overlay">
           <p>${c.description || 'Tidak ada deskripsi'}</p>
         </div>
       </div>
-      
-      <!-- Title & Stats - OUTSIDE card -->
       <div class="content-info">
         <h3 title="${c.title}">${c.title}</h3>
         <p>${c.views} views · ${c.likes} suka</p>
@@ -696,7 +676,6 @@ function renderAnalyst() {
     `).join('');
   }
  
-  // Stats
   const live = projects.filter(p=>p.status==='live');
   const dev = projects.filter(p=>p.status==='development');
   document.getElementById('stat-total').textContent = projects.length;
@@ -710,13 +689,11 @@ function renderAnalyst() {
 }
  
 function renderProfil() {
-  // Profil butuh login — sudah diblock di navigateTo, tapi double check
   if (!CURRENT_USER) { openAuthModal(); return }
   const profile = DB.get('user_profile') || {};
   const contents = DB.getArr('contents');
   const discussions = DB.getArr('discussions');
  
-  // Profile info
   document.getElementById('profil-name').textContent = profile.name || 'San Pelong';
   document.getElementById('profil-username').textContent = '@'+(profile.username||'sanpelong');
   document.getElementById('profil-bio').textContent = profile.bio || '';
@@ -725,7 +702,6 @@ function renderProfil() {
   document.getElementById('info-techstack').textContent = profile.techStack || '';
   document.getElementById('info-interests').textContent = profile.interests || '';
  
-  // Avatar
   if (profile.avatarUrl) {
     document.getElementById('avatar-img').src = profile.avatarUrl;
     document.getElementById('avatar-img').classList.remove('hidden');
@@ -741,7 +717,6 @@ function renderProfil() {
     coverImg.classList.remove('hidden');
   }
  
-  // Stats
   document.getElementById('stat-followers').textContent = profile.followers || 0;
   document.getElementById('stat-following').textContent = profile.following || 0;
   document.getElementById('stat-posts').textContent = contents.length;
@@ -749,12 +724,10 @@ function renderProfil() {
   document.getElementById('stat-comments').textContent = discussions.reduce((a,d)=>a+d.comments,0);
   document.getElementById('stat-shares').textContent = discussions.reduce((a,d)=>a+d.shares,0);
  
-  // Recent uploads
   renderRecentUploads();
  
-  // Activity
   const actEl = document.getElementById('profil-activity');
-  const allDisc = DB.getArr('discussions').filter(d=>d.userId==='u1');
+  const allDisc = DB.getArr('discussions').filter(d=>d.userId===CURRENT_USER?.id);
   if (!allDisc.length) {
     actEl.innerHTML = `<p class="text-gray-400 text-sm py-6 text-center">Belum ada aktivitas.</p>`;
   } else {
@@ -782,9 +755,9 @@ function renderRecentUploads() {
   const contents = DB.getArr('contents').slice(0,3);
   const links = DB.getArr('linkwebs').slice(0,2);
   const el = document.getElementById('recent-uploads');
-  const fileIcons = {image:'fas fa-file-image text-orange-400',video:'fas fa-file-video text-purple-400',pdf:'fas fa-file-pdf text-red-400',doc:'fas fa-file-word text-blue-400'};
+  const fileIconsMap = {image:'fas fa-file-image text-orange-400',video:'fas fa-file-video text-purple-400',pdf:'fas fa-file-pdf text-red-400',doc:'fas fa-file-word text-blue-400'};
   const all = [
-    ...contents.map(c=>({icon:fileIcons[c.fileType]||'fas fa-file text-gray-400',name:c.title,size:c.fileType?.toUpperCase()||'FILE',type:'content'})),
+    ...contents.map(c=>({icon:fileIconsMap[c.fileType]||'fas fa-file text-gray-400',name:c.title,size:c.fileType?.toUpperCase()||'FILE',type:'content'})),
     ...links.map(l=>({icon:'fas fa-link text-green-500',name:l.title,size:'LINK',type:'link'})),
   ].slice(0,4);
   if (!all.length) { el.innerHTML = `<p class="text-xs text-gray-400">Belum ada upload</p>`; return; }
@@ -845,20 +818,28 @@ function likePost(postId) {
  
 function showContentDetail(id) {
   const contents = DB.getArr('contents');
-  const c = contents.find(c=>c.id===id);
+  const c = contents.find(c => c.id === id);
   if (!c) return;
+  
+  const fileIconMap = {
+    image: 'fas fa-file-image text-white',
+    video: 'fas fa-file-video text-white',
+    pdf: 'fas fa-file-pdf text-white',
+    doc: 'fas fa-file-word text-white',
+    docx: 'fas fa-file-word text-white'
+  };
+  const fileIcon = fileIconMap[c.fileType] || 'fas fa-file text-white';
  
-  // increment views
-  const idx = contents.findIndex(cc=>cc.id===id);
-  if(idx>=0){contents[idx].views++;DB.set('contents',contents);}
+  const idx = contents.findIndex(cc => cc.id === id);
+  if (idx >= 0) { contents[idx].views++; DB.set('contents', contents); }
  
-  // init comments & ratings jika belum ada
-  if (!c.comments) { contents[idx].comments = []; DB.set('contents',contents); }
-  if (!c.ratings)  { contents[idx].ratings  = []; DB.set('contents',contents); }
+  if (!c.comments) { contents[idx].comments = []; DB.set('contents', contents); }
+  if (!c.ratings)  { contents[idx].ratings = []; DB.set('contents', contents); }
  
-  const comments = DB.getArr('contents').find(cc=>cc.id===id).comments || [];
-  const ratings  = DB.getArr('contents').find(cc=>cc.id===id).ratings  || [];
-  const avgRating = ratings.length ? (ratings.reduce((a,b)=>a+b.score,0)/ratings.length).toFixed(1) : null;
+  const comments = DB.getArr('contents').find(cc => cc.id === id).comments || [];
+  const ratings = DB.getArr('contents').find(cc => cc.id === id).ratings || [];
+  const avgRating = ratings.length ? (ratings.reduce((a,b) => a + b.score, 0) / ratings.length).toFixed(1) : null;
+  
   const fileMetaExtra = c.fileName
     ? `<div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-400 mb-0.5">Nama File</p><p class="text-sm font-semibold text-black truncate">${c.fileName}</p></div>
        <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-400 mb-0.5">Ukuran</p><p class="text-sm font-semibold text-black">${c.fileSize ? formatSize(c.fileSize) : '-'}</p></div>`
@@ -872,7 +853,7 @@ function showContentDetail(id) {
     ? `<button onclick="togglePdfViewer('${c.id}')" class="flex-1 flex items-center justify-center gap-2 bg-black text-white text-sm py-3 rounded-xl font-semibold hover:bg-gray-800 transition"><i class="fas fa-file-pdf"></i> Buka PDF</button>`
     : '';
  
-  const pdfViewerBlock = c.fileType === 'pdf'
+  const pdfViewerBlock = c.fileType === 'pdf' && c.fileData
     ? `<div id="pdf-viewer-${c.id}" class="hidden mb-6"><div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold text-black">Preview PDF</span><button onclick="togglePdfViewer('${c.id}')" class="text-xs text-gray-400 hover:text-black"><i class="fas fa-times"></i> Tutup</button></div><iframe src="${c.fileData}" class="w-full rounded-2xl border border-gray-200" style="height:70vh;" title="${c.title}"></iframe></div>`
     : '';
  
@@ -880,23 +861,21 @@ function showContentDetail(id) {
     ? `<div class="flex gap-3 mb-4">${pdfOpenBtn}<button onclick="downloadContent('${c.id}')" class="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-black text-sm py-3 rounded-xl font-semibold hover:bg-gray-200 transition"><i class="fas fa-download"></i> Download</button></div>${pdfViewerBlock}`
     : `<div class="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-4 text-sm text-yellow-700"><i class="fas fa-info-circle"></i><span>Konten ini tidak memiliki file yang diunggah.</span></div>`;
  
- 
- 
-  const stars = (score, interactive=false, name='') => [1,2,3,4,5].map(i=>
+  const stars = (score, interactive = false, name = '') => [1, 2, 3, 4, 5].map(i =>
     interactive
-      ? `<i class="${i<=score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg" onmouseover="hoverStar(this,${i})" onmouseout="resetStars('${name}')" onclick="setStar('${name}',${i})"></i>`
-      : `<i class="${i<=Math.round(score)?'fas':'far'} fa-star text-yellow-400 text-sm"></i>`
+      ? `<i class="${i <= score ? 'fas' : 'far'} fa-star text-yellow-400 cursor-pointer text-lg" onmouseover="hoverStar(this,${i})" onmouseout="resetStars('${name}')" onclick="setStar('${name}',${i})"></i>`
+      : `<i class="${i <= Math.round(score) ? 'fas' : 'far'} fa-star text-yellow-400 text-sm"></i>`
   ).join('');
  
   const commentsHtml = comments.length
-    ? comments.map(cm=>`
+    ? comments.map(cm => `
         <div class="flex gap-3 py-4 border-b border-gray-100 last:border-0">
           <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${cm.author.charAt(0).toUpperCase()}</div>
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
               <span class="text-sm font-semibold text-black">${cm.author}</span>
               <div class="flex">${stars(cm.rating)}</div>
-              <span class="text-xs text-gray-400 ml-auto">${new Date(cm.date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>
+              <span class="text-xs text-gray-400 ml-auto">${new Date(cm.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
             <p class="text-sm text-gray-600 leading-relaxed">${cm.text}</p>
           </div>
@@ -906,22 +885,16 @@ function showContentDetail(id) {
   const html = `
     <div id="content-detail-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeContentDetail()">
       <div class="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
- 
-        <!-- Header bar -->
         <div class="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
           <button onclick="closeContentDetail()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
             <i class="fas fa-arrow-left text-sm text-gray-700"></i>
           </button>
           <span class="text-xs font-medium text-gray-400 uppercase tracking-widest">${c.fileType || 'Konten'}</span>
           <button onclick="toggleBookmark('${c.id}');closeContentDetail();showContentDetail('${c.id}')" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-            <i class="${c.bookmarked?'fas text-black':'far text-gray-400'} fa-bookmark text-sm"></i>
+            <i class="${c.bookmarked ? 'fas text-black' : 'far text-gray-400'} fa-bookmark text-sm"></i>
           </button>
         </div>
- 
-        <!-- Scrollable body -->
         <div class="overflow-y-auto flex-1 px-5 pb-8">
- 
-          <!-- Cover / Sampul -->
           <div class="w-full aspect-[3/2] rounded-2xl overflow-hidden bg-zinc-900 flex items-center justify-center mb-5 relative">
             ${c.thumbUrl
               ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover">`
@@ -931,8 +904,6 @@ function showContentDetail(id) {
               <h2 class="text-white text-xl font-bold leading-tight drop-shadow">${c.title}</h2>
             </div>
           </div>
- 
-          <!-- Rating ringkas -->
           <div class="flex items-center gap-3 mb-4">
             ${avgRating
               ? `<div class="flex items-center gap-1.5">
@@ -948,14 +919,10 @@ function showContentDetail(id) {
               <span><i class="fas fa-heart mr-1 text-red-400"></i>${c.likes}</span>
             </div>
           </div>
- 
-          <!-- Deskripsi -->
           <div class="mb-6">
             <h3 class="text-sm font-semibold text-black mb-2">Tentang Konten</h3>
             <p class="text-sm text-gray-600 leading-relaxed">${c.description || 'Tidak ada deskripsi tersedia.'}</p>
           </div>
- 
-          <!-- Info meta -->
           <div class="grid grid-cols-2 gap-3 mb-4">
             <div class="bg-gray-50 rounded-xl p-3">
               <p class="text-xs text-gray-400 mb-0.5">Tipe File</p>
@@ -963,16 +930,12 @@ function showContentDetail(id) {
             </div>
             <div class="bg-gray-50 rounded-xl p-3">
               <p class="text-xs text-gray-400 mb-0.5">Diunggah</p>
-              <p class="text-sm font-semibold text-black">${new Date(c.createdAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
+              <p class="text-sm font-semibold text-black">${new Date(c.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
             </div>
             ${fileMetaExtra}
           </div>
- 
-          <!-- Tombol Aksi File -->
           ${webUrlBlock}
           ${fileActionsBlock}
- 
-          <!-- Beri Rating -->
           <div class="bg-gray-50 rounded-2xl p-4 mb-6">
             <h3 class="text-sm font-semibold text-black mb-3">Beri Penilaian</h3>
             <div id="star-input-${c.id}" data-score="0" class="flex gap-1 mb-3">
@@ -984,15 +947,12 @@ function showContentDetail(id) {
               Kirim Komentar
             </button>
           </div>
- 
-          <!-- Komentar -->
           <div>
             <h3 class="text-sm font-semibold text-black mb-1">Komentar <span class="text-gray-400 font-normal">(${comments.length})</span></h3>
             <div id="comments-list-${c.id}">
               ${commentsHtml}
             </div>
           </div>
- 
         </div>
       </div>
     </div>`;
@@ -1026,17 +986,17 @@ function closeContentDetail() {
  
 function hoverStar(el, score) {
   const container = el.parentElement;
-  [...container.querySelectorAll('i')].forEach((s,i)=>{
-    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
+  [...container.querySelectorAll('i')].forEach((s, i) => {
+    s.className = `${i < score ? 'fas' : 'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
   });
 }
  
 function resetStars(contentId) {
   const container = document.getElementById(`star-input-${contentId}`);
   if (!container) return;
-  const score = parseInt(container.dataset.score)||0;
-  [...container.querySelectorAll('i')].forEach((s,i)=>{
-    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
+  const score = parseInt(container.dataset.score) || 0;
+  [...container.querySelectorAll('i')].forEach((s, i) => {
+    s.className = `${i < score ? 'fas' : 'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
   });
 }
  
@@ -1044,26 +1004,26 @@ function setStar(contentId, score) {
   const container = document.getElementById(`star-input-${contentId}`);
   if (!container) return;
   container.dataset.score = score;
-  [...container.querySelectorAll('i')].forEach((s,i)=>{
-    s.className = `${i<score?'fas':'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
+  [...container.querySelectorAll('i')].forEach((s, i) => {
+    s.className = `${i < score ? 'fas' : 'far'} fa-star text-yellow-400 cursor-pointer text-lg`;
   });
 }
  
 function submitComment(contentId) {
   const author = document.getElementById(`comment-author-${contentId}`).value.trim();
-  const text   = document.getElementById(`comment-text-${contentId}`).value.trim();
-  const score  = parseInt(document.getElementById(`star-input-${contentId}`)?.dataset.score)||0;
+  const text = document.getElementById(`comment-text-${contentId}`).value.trim();
+  const score = parseInt(document.getElementById(`star-input-${contentId}`)?.dataset.score) || 0;
  
   if (!author) { toast('⚠️ Masukkan nama kamu'); return; }
-  if (!text)   { toast('⚠️ Tulis komentar dulu'); return; }
-  if (!score)  { toast('⚠️ Beri bintang dulu'); return; }
+  if (!text) { toast('⚠️ Tulis komentar dulu'); return; }
+  if (!score) { toast('⚠️ Beri bintang dulu'); return; }
  
   const contents = DB.getArr('contents');
-  const idx = contents.findIndex(c=>c.id===contentId);
-  if (idx<0) return;
+  const idx = contents.findIndex(c => c.id === contentId);
+  if (idx < 0) return;
  
   if (!contents[idx].comments) contents[idx].comments = [];
-  if (!contents[idx].ratings)  contents[idx].ratings  = [];
+  if (!contents[idx].ratings) contents[idx].ratings = [];
  
   contents[idx].comments.unshift({ author, text, rating: score, date: new Date().toISOString() });
   contents[idx].ratings.push({ score });
@@ -1079,20 +1039,19 @@ function submitComment(contentId) {
 // ============================
 function handleSearch(q) {
   if (!q.trim()) return;
-  const contents = DB.getArr('contents').filter(c=>c.title.toLowerCase().includes(q.toLowerCase()));
-  const links = DB.getArr('linkwebs').filter(l=>l.title.toLowerCase().includes(q.toLowerCase()));
-  // Just navigate to kategori and show results
-  toast(`${contents.length+links.length} hasil ditemukan`);
+  const contents = DB.getArr('contents').filter(c => c.title.toLowerCase().includes(q.toLowerCase()));
+  const links = DB.getArr('linkwebs').filter(l => l.title.toLowerCase().includes(q.toLowerCase()));
+  toast(`${contents.length + links.length} hasil ditemukan`);
 }
  
 // ============================
 // UPLOAD KONTEN
 // ============================
 function setUploadTab(tab) {
-  document.getElementById('tab-konten').classList.toggle('active', tab==='konten');
-  document.getElementById('tab-linkweb').classList.toggle('active', tab==='linkweb');
-  document.getElementById('upload-konten-panel').classList.toggle('hidden', tab!=='konten');
-  document.getElementById('upload-linkweb-panel').classList.toggle('hidden', tab!=='linkweb');
+  document.getElementById('tab-konten').classList.toggle('active', tab === 'konten');
+  document.getElementById('tab-linkweb').classList.toggle('active', tab === 'linkweb');
+  document.getElementById('upload-konten-panel').classList.toggle('hidden', tab !== 'konten');
+  document.getElementById('upload-linkweb-panel').classList.toggle('hidden', tab !== 'linkweb');
 }
  
 function handleMiniFile(input) {
@@ -1143,6 +1102,7 @@ function clearMainFile() {
  
 function handleThumbFile(input) {
   if (!input.files[0]) return;
+  tempFiles.thumbFile = input.files[0];
   const reader = new FileReader();
   reader.onload = e => {
     tempFiles.thumb = e.target.result;
@@ -1155,9 +1115,9 @@ function handleThumbFile(input) {
  
 function handleLinkIcon(input) {
   if (!input.files[0]) return;
+  tempFiles.linkIcon = input.files[0];
   const reader = new FileReader();
   reader.onload = e => {
-    tempFiles.linkIcon = e.target.result;
     document.getElementById('lk-icon-preview').src = e.target.result;
     document.getElementById('lk-icon-preview').classList.remove('hidden');
     document.getElementById('lk-icon-placeholder').classList.add('hidden');
@@ -1168,7 +1128,7 @@ function handleLinkIcon(input) {
 async function submitUpload() {
   const title = document.getElementById('up-title').value.trim();
   const catId = document.getElementById('up-category').value;
-  const desc  = document.getElementById('up-desc').value.trim();
+  const desc = document.getElementById('up-desc').value.trim();
   if (!title) { toast('⚠️ Judul wajib diisi!'); return; }
  
   let fileUrl = null, thumbUrl = null, fileType = 'doc';
@@ -1182,6 +1142,7 @@ async function submitUpload() {
   }
  
   if (tempFiles.thumbFile) {
+    toast('⏳ Mengupload thumbnail...');
     thumbUrl = await window._SB.uploadThumbnail(CURRENT_USER.id, tempFiles.thumbFile);
   }
  
@@ -1190,15 +1151,17 @@ async function submitUpload() {
     description: desc,
     category_id: catId || null,
     icon_type: fileType,
-    display_url: fileUrl || document.getElementById('up-url').value.trim() || null,
+    file_url: fileUrl,
     preview_image: thumbUrl || null,
+    display_url: document.getElementById('up-url').value.trim() || null,
     status: 'published'
   });
  
   DB.pushArr('contents', {
     id: content.id, userId: CURRENT_USER.id, categoryId: catId,
     title, description: desc, fileType,
-    thumbUrl: thumbUrl || '', views: 0, likes: 0, bookmarked: false,
+    fileData: fileUrl, thumbUrl: thumbUrl || '',
+    views: 0, likes: 0, bookmarked: false,
     createdAt: content.created_at
   });
  
@@ -1210,17 +1173,33 @@ async function submitUpload() {
  
 async function submitLink() {
   const title = document.getElementById('lk-title').value.trim();
-  const url   = document.getElementById('lk-url').value.trim();
+  const url = document.getElementById('lk-url').value.trim();
   if (!title || !url) { toast('⚠️ Judul dan URL wajib diisi!'); return; }
  
-  const ref = await window._SB.addRef(CURRENT_USER.id, { theme: title, language: url });
+  let iconUrl = '';
+  if (tempFiles.linkIcon) {
+    toast('⏳ Mengupload icon...');
+    const ext = tempFiles.linkIcon.name.split('.').pop();
+    const path = `links/${CURRENT_USER.id}/${Date.now()}.${ext}`;
+    const { error } = await window._SB.supabase.storage.from('avatars').upload(path, tempFiles.linkIcon);
+    if (!error) {
+      const { data: { publicUrl } } = window._SB.supabase.storage.from('avatars').getPublicUrl(path);
+      iconUrl = publicUrl;
+    }
+  }
+ 
+  const ref = await window._SB.addRef(CURRENT_USER.id, { 
+    theme: title, 
+    language: url,
+    icon_url: iconUrl
+  });
  
   DB.pushArr('linkwebs', {
     id: ref.id, userId: CURRENT_USER.id,
     categoryId: document.getElementById('lk-category').value || null,
     title, url,
     description: document.getElementById('lk-desc').value.trim(),
-    iconUrl: tempFiles.linkIcon || '',
+    iconUrl: iconUrl,
     status: document.getElementById('lk-status').value,
     bookmarked: false,
     createdAt: ref.created_at
@@ -1255,26 +1234,26 @@ function submitProject() {
   const name = document.getElementById('proj-name').value.trim();
   if (!name) { toast('⚠️ Nama project wajib diisi!'); return; }
   const newProj = {
-    id: DB.uuid(), userId:'u1', name,
+    id: DB.uuid(), userId: CURRENT_USER?.id || 'u1', name,
     description: document.getElementById('proj-desc').value.trim(),
     deployUrl: document.getElementById('proj-url').value.trim(),
     techStack: document.getElementById('proj-tech').value.trim(),
     status: document.getElementById('proj-status').value,
-    visitCount:0,
-    performanceScore: parseInt(document.getElementById('proj-perf').value)||80,
-    uptimePercent: parseInt(document.getElementById('proj-uptime').value)||99,
+    visitCount: 0,
+    performanceScore: parseInt(document.getElementById('proj-perf').value) || 80,
+    uptimePercent: parseInt(document.getElementById('proj-uptime').value) || 99,
     lastDeployed: new Date().toISOString(),
     createdAt: new Date().toISOString(),
   };
   DB.pushArr('projects', newProj);
-  ['proj-name','proj-desc','proj-url','proj-tech','proj-perf','proj-uptime'].forEach(id=>document.getElementById(id).value='');
+  ['proj-name', 'proj-desc', 'proj-url', 'proj-tech', 'proj-perf', 'proj-uptime'].forEach(id => document.getElementById(id).value = '');
   toast('✅ Project berhasil ditambahkan!');
   closeModal('modal-project');
   renderAnalyst();
 }
  
 function deleteProject(id) {
-  const projects = DB.getArr('projects').filter(p=>p.id!==id);
+  const projects = DB.getArr('projects').filter(p => p.id !== id);
   DB.set('projects', projects);
   toast('🗑️ Project dihapus');
   renderAnalyst();
@@ -1282,12 +1261,12 @@ function deleteProject(id) {
  
 async function saveEditProfil() {
   const updates = {
-    username:   document.getElementById('ep-username').value.trim() || CURRENT_PROFILE.username,
-    bio:        document.getElementById('ep-bio').value.trim(),
-    location:   document.getElementById('ep-location').value.trim(),
+    username: document.getElementById('ep-username').value.trim() || CURRENT_PROFILE.username,
+    bio: document.getElementById('ep-bio').value.trim(),
+    location: document.getElementById('ep-location').value.trim(),
     occupation: document.getElementById('ep-occupation').value.trim(),
     tech_stack: document.getElementById('ep-techstack').value.trim(),
-    interests:  document.getElementById('ep-interests').value.trim(),
+    interests: document.getElementById('ep-interests').value.trim(),
   };
   CURRENT_PROFILE = await window._SB.updateProfile(CURRENT_USER.id, updates);
   DB.set('user_profile', {
@@ -1335,9 +1314,9 @@ async function uploadCover(input) {
  
 function clearAllData() {
   if (!confirm('Yakin hapus semua data? Ini tidak bisa dibatalkan.')) return;
-  Object.keys(localStorage).filter(k=>k.startsWith('nissanex_')).forEach(k=>localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k => k.startsWith('nissanex_')).forEach(k => localStorage.removeItem(k));
   toast('🗑️ Semua data dihapus. Refresh halaman...');
-  setTimeout(()=>location.reload(), 1500);
+  setTimeout(() => location.reload(), 1500);
 }
  
 // ============================
@@ -1346,15 +1325,14 @@ function clearAllData() {
 function openUploadModal() {
   if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk upload konten'); return }
   populateCategorySelects();
-  tempFiles = {main:null, thumb:null, linkIcon:null};
+  tempFiles = { main: null, thumb: null, thumbFile: null, linkIcon: null };
   openModal('modal-upload');
 }
  
 function openLinkModal() {
   if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk menambah link'); return }
   populateCategorySelects();
-  tempFiles = {main:null, thumb:null, linkIcon:null};
-  // Reset icon preview
+  tempFiles = { main: null, thumb: null, thumbFile: null, linkIcon: null };
   document.getElementById('lk-icon-preview').classList.add('hidden');
   document.getElementById('lk-icon-placeholder').classList.remove('hidden');
   openModal('modal-link');
@@ -1378,61 +1356,61 @@ function openEditProfil() {
   openModal('modal-editprofil');
 }
  
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-function closeModalBackdrop(e, id) { if (e.target.id===id) closeModal(id); }
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+function closeModalBackdrop(e, id) { if (e.target.id === id) closeModal(id); }
  
 function populateCategorySelects() {
   const cats = DB.getArr('categories');
-  const opts = cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  ['up-category','lk-category'].forEach(id => {
+  const opts = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  ['up-category', 'lk-category'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = '<option value="">Pilih kategori...</option>'+opts;
+    if (el) el.innerHTML = '<option value="">Pilih kategori...</option>' + opts;
   });
 }
  
 function resetUploadForm() {
-  ['up-title','up-desc','up-url'].forEach(id=>document.getElementById(id).value='');
+  ['up-title', 'up-desc', 'up-url'].forEach(id => document.getElementById(id).value = '');
   clearMainFile();
-  tempFiles = {main:null, thumb:null, linkIcon:null};
+  tempFiles = { main: null, thumb: null, thumbFile: null, linkIcon: null };
   document.getElementById('thumb-preview').classList.add('hidden');
   document.getElementById('thumb-icon-placeholder').classList.remove('hidden');
 }
  
 function resetLinkForm() {
-  ['lk-title','lk-url','lk-desc'].forEach(id=>document.getElementById(id).value='');
+  ['lk-title', 'lk-url', 'lk-desc'].forEach(id => document.getElementById(id).value = '');
   tempFiles.linkIcon = null;
 }
  
 // ============================
 // UTILITIES
 // ============================
-function toast(msg, duration=2800) {
+function toast(msg, duration = 2800) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), duration);
+  setTimeout(() => el.classList.remove('show'), duration);
 }
  
 function formatSize(bytes) {
-  if (bytes<1024) return bytes+'B';
-  if (bytes<1048576) return (bytes/1024).toFixed(1)+'KB';
-  return (bytes/1048576).toFixed(1)+'MB';
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + 'KB';
+  return (bytes / 1048576).toFixed(1) + 'MB';
 }
  
 function timeAgo(dateStr) {
-  const diff = (Date.now()-new Date(dateStr).getTime())/1000;
-  if (diff<60) return 'Baru saja';
-  if (diff<3600) return Math.floor(diff/60)+'m yang lalu';
-  if (diff<86400) return Math.floor(diff/3600)+'j yang lalu';
-  if (diff<604800) return Math.floor(diff/86400)+' hari yang lalu';
-  return Math.floor(diff/604800)+' minggu yang lalu';
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 60) return 'Baru saja';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm yang lalu';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'j yang lalu';
+  if (diff < 604800) return Math.floor(diff / 86400) + ' hari yang lalu';
+  return Math.floor(diff / 604800) + ' minggu yang lalu';
 }
  
 function getCurrentPage() {
   const active = document.querySelector('.page-content.active');
   if (!active) return 'beranda';
-  return active.id.replace('page-','');
+  return active.id.replace('page-', '');
 }
  
 // ============================
@@ -1470,24 +1448,16 @@ function toggleCardDesc(cardEl) {
 }
  
 // ============================
-// EXPOSE KE WINDOW (wajib untuk type="module")
-// Harus SEBELUM init() agar onclick di HTML langsung bisa akses
+// INIT
 // ============================
-// Tidak diperlukan lagi — script sudah <script> biasa, semua fungsi otomatis global
- 
-// Bersihkan cache kategori lama agar DEFAULT_CATEGORIES yang baru dipakai
 ;(function resetStaleCategories() {
   const cats = DB.getArr('categories');
   const isOldSeed = cats.length > 0 && cats.some(c =>
-    ['Tekno','Musik','Film','Olahraga','Kuliner'].includes(c.name)
+    ['Tekno', 'Musik', 'Film', 'Olahraga', 'Kuliner'].includes(c.name)
   );
   if (isOldSeed) {
     localStorage.removeItem('nissanex_categories');
-    localStorage.removeItem('nissanex_seeded');
   }
 })();
  
-// ============================
-// INIT
-// ============================
 init();

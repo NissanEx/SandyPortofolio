@@ -133,6 +133,32 @@ function onAuthChange(callback) {
     callback(event, session?.user ?? null)
   })
 }
+// Di supabase.js, tambahkan:
+async function uploadCategoryIcon(userId, categoryId, file) {
+  const ext = file.name.split('.').pop()
+  const path = `categories/${categoryId}/icon.${ext}`
+  const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+  if (error) throw error
+  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+}
+
+async function updateCategoryIcon(categoryId, iconUrl) {
+  const { data, error } = await supabase
+    .from('categories')
+    .update({ file_url: iconUrl })
+    .eq('id', categoryId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Export ke window._SB
+window._SB = {
+  // ... existing exports
+  uploadCategoryIcon,
+  updateCategoryIcon,
+}
 
 // Expose semua ke window agar bisa dipakai script biasa
 window._SB = {
