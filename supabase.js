@@ -117,7 +117,6 @@ async function signUp(email, password, username) {
 
   return { user: data.user, session: data.session }
 }
-
 async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) throw error
