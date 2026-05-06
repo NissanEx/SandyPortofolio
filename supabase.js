@@ -9,12 +9,21 @@ async function getCurrentUser() {
   return data?.user ?? null
 }
 async function getProfile(userId) {
-  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single()
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('auth_id', userId)  // ✅ ganti dari 'id' ke 'auth_id'
+    .single()
   if (error) throw error
   return data
 }
+
 async function updateProfile(userId, updates) {
-  const { data, error } = await supabase.from('users').update(updates).eq('id', userId).select().single()
+  const { data, error } = await supabase
+    .from('users')
+    .update(updates)
+    .eq('auth_id', userId)  // ✅ ganti
+    .select().single()
   if (error) throw error
   return data
 }
@@ -90,27 +99,22 @@ async function addRef(userId, ref) {
   return data
 }
 
-// ============================
-// AUTH FUNCTIONS
-// ============================
 async function signUp(email, password, username) {
   const { data, error } = await supabase.auth.signUp({
     email, password,
     options: { data: { username } }
   })
   if (error) throw error
-  // Buat profil awal di tabel users
+
   if (data.user) {
-    try {
-      await supabase.from('users').upsert({
-        id: data.user.id,
-        username: username || email.split('@')[0],
-        email: email,
-        created_at: new Date().toISOString()
-      })
-    } catch(e) { /* profil sudah ada */ }
+    supabase.from('users').insert({
+      auth_id: data.user.id,   // ✅ simpan di auth_id
+      username: username || email.split('@')[0],
+      email: email,
+      created_at: new Date().toISOString()
+    }).then().catch(() => {})  // fire and forget
   }
-  // ✅ FIX: Return object dengan struktur yang sesuai
+
   return { user: data.user, session: data.session }
 }
 
