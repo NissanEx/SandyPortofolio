@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 const SUPABASE_URL = 'https://ewezbxdhwuwfzfuqgymb.supabase.co'
-const SUPABASE_KEY = 'ssb_publishable_hWnbHiYsUObBrPJuzDu3YQ_PYBhLn39'
+const SUPABASE_KEY = 'sb_publishable_hWnbHiYsUObBrPJuzDu3YQ_PYBhLn39'
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 async function getCurrentUser() {
