@@ -97,24 +97,248 @@ async function init() {
     window._pendingInit = init
     return
   }
+
+  // Listen perubahan auth state secara realtime
+  window._SB.onAuthChange(async (event, user) => {
+    if (event === 'SIGNED_IN') {
+      CURRENT_USER = user
+      try { CURRENT_PROFILE = await window._SB.getProfile(user.id) } catch(e) { CURRENT_PROFILE = null }
+      await seedDataSupabase()
+      updateSidebarUser()
+      closeAuthModal()
+      renderPage(getCurrentPage())
+    } else if (event === 'SIGNED_OUT') {
+      CURRENT_USER = null
+      CURRENT_PROFILE = null
+      updateSidebarUser()
+      renderBeranda()
+    }
+  })
+
   try {
     CURRENT_USER = await window._SB.getCurrentUser()
   } catch(e) {
     CURRENT_USER = null
   }
-  if (!CURRENT_USER) {
-    // Jika belum login, tetap render dengan data lokal (dev mode)
-    await seedDataSupabase()
-    renderBeranda()
-    return
+
+  if (CURRENT_USER) {
+    try { CURRENT_PROFILE = await window._SB.getProfile(CURRENT_USER.id) } catch(e) { CURRENT_PROFILE = null }
   }
-  try {
-    CURRENT_PROFILE = await window._SB.getProfile(CURRENT_USER.id)
-  } catch(e) {
-    CURRENT_PROFILE = null
-  }
+
   await seedDataSupabase()
+  updateSidebarUser()
   renderBeranda()
+}
+
+// ============================
+// AUTH GUARD
+// ============================
+// Halaman / aksi yang butuh login
+const AUTH_REQUIRED_PAGES = ['profil', 'disimpan', 'pengaturan']
+
+function requireAuth(action) {
+  if (CURRENT_USER) {
+    action()
+  } else {
+    openAuthModal()
+    toast('⚠️ Silakan login terlebih dahulu')
+  }
+}
+
+// Update tampilan sidebar sesuai status login
+function updateSidebarUser() {
+  const el = document.getElementById('sidebar-user-info')
+  if (!el) return
+  if (CURRENT_USER && CURRENT_PROFILE) {
+    const initial = (CURRENT_PROFILE.username || CURRENT_USER.email || 'U')[0].toUpperCase()
+    const avatarHtml = CURRENT_PROFILE.avatar_url
+      ? `<img src="${CURRENT_PROFILE.avatar_url}" class="w-9 h-9 rounded-xl object-cover">`
+      : `<div class="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-bold text-sm">${initial}</div>`
+    el.innerHTML = `
+      <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10">
+        ${avatarHtml}
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold truncate">${CURRENT_PROFILE.username || 'User'}</p>
+          <p class="text-xs text-gray-400 truncate">${CURRENT_USER.email}</p>
+        </div>
+      </div>
+    `
+  } else {
+    el.innerHTML = `
+      <button onclick="openAuthModal()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm">
+        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+          <i class="fas fa-user text-gray-400"></i>
+        </div>
+        <span class="text-gray-300">Login / Daftar</span>
+      </button>
+    `
+  }
+}
+
+// ============================
+// AUTH MODAL
+// ============================
+function openAuthModal(tab = 'login') {
+  let modal = document.getElementById('modal-auth')
+  if (!modal) {
+    document.body.insertAdjacentHTML('beforeend', buildAuthModal())
+    modal = document.getElementById('modal-auth')
+  }
+  modal.classList.add('open')
+  document.body.style.overflow = 'hidden'
+  switchAuthTab(tab)
+}
+
+function closeAuthModal() {
+  const modal = document.getElementById('modal-auth')
+  if (modal) { modal.classList.remove('open'); document.body.style.overflow = '' }
+}
+
+function switchAuthTab(tab) {
+  const loginPanel  = document.getElementById('auth-login-panel')
+  const regPanel    = document.getElementById('auth-reg-panel')
+  const loginTab    = document.getElementById('auth-tab-login')
+  const regTab      = document.getElementById('auth-tab-reg')
+  if (!loginPanel) return
+  loginPanel.classList.toggle('hidden', tab !== 'login')
+  regPanel.classList.toggle('hidden', tab !== 'register')
+  loginTab.classList.toggle('active-tab', tab === 'login')
+  regTab.classList.toggle('active-tab', tab === 'register')
+}
+
+function buildAuthModal() {
+  return `
+  <div id="modal-auth" class="modal-backdrop" onclick="if(event.target.id==='modal-auth')closeAuthModal()">
+    <div class="modal-box" style="max-width:420px">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
+
+      <!-- Logo -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-9 h-9 bg-black rounded-xl flex items-center justify-center">
+          <span class="text-white font-bold text-lg">N</span>
+        </div>
+        <h1 class="text-xl font-bold brand-lora">Nissan Ex</h1>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg text-sm font-bold transition active-tab">Masuk</button>
+        <button id="auth-tab-reg" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-lg text-sm font-bold transition">Daftar</button>
+      </div>
+
+      <!-- LOGIN PANEL -->
+      <div id="auth-login-panel">
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Email</label>
+            <input id="auth-login-email" type="email" class="form-input" placeholder="email@kamu.com">
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <div class="relative">
+              <input id="auth-login-pass" type="password" class="form-input pr-10" placeholder="Password...">
+              <button type="button" onclick="togglePassVis('auth-login-pass')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                <i class="fas fa-eye text-sm"></i>
+              </button>
+            </div>
+          </div>
+          <p id="auth-login-err" class="text-red-500 text-xs hidden"></p>
+        </div>
+        <button onclick="doLogin()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition mt-5 flex items-center justify-center gap-2" id="btn-login">
+          <i class="fas fa-sign-in-alt"></i> Masuk
+        </button>
+        <p class="text-center text-sm text-gray-500 mt-4">Belum punya akun? <button onclick="switchAuthTab('register')" class="font-bold text-black underline">Daftar sekarang</button></p>
+      </div>
+
+      <!-- REGISTER PANEL -->
+      <div id="auth-reg-panel" class="hidden">
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Username</label>
+            <input id="auth-reg-user" type="text" class="form-input" placeholder="username kamu...">
+          </div>
+          <div>
+            <label class="form-label">Email</label>
+            <input id="auth-reg-email" type="email" class="form-input" placeholder="email@kamu.com">
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <div class="relative">
+              <input id="auth-reg-pass" type="password" class="form-input pr-10" placeholder="Min. 6 karakter">
+              <button type="button" onclick="togglePassVis('auth-reg-pass')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                <i class="fas fa-eye text-sm"></i>
+              </button>
+            </div>
+          </div>
+          <p id="auth-reg-err" class="text-red-500 text-xs hidden"></p>
+        </div>
+        <button onclick="doRegister()" class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition mt-5 flex items-center justify-center gap-2" id="btn-register">
+          <i class="fas fa-user-plus"></i> Buat Akun
+        </button>
+        <p class="text-center text-sm text-gray-500 mt-4">Sudah punya akun? <button onclick="switchAuthTab('login')" class="font-bold text-black underline">Masuk</button></p>
+      </div>
+    </div>
+  </div>`
+}
+
+function togglePassVis(inputId) {
+  const inp = document.getElementById(inputId)
+  inp.type = inp.type === 'password' ? 'text' : 'password'
+}
+
+async function doLogin() {
+  const email = document.getElementById('auth-login-email').value.trim()
+  const pass  = document.getElementById('auth-login-pass').value
+  const errEl = document.getElementById('auth-login-err')
+  const btn   = document.getElementById('btn-login')
+  errEl.classList.add('hidden')
+  if (!email || !pass) { errEl.textContent = 'Email dan password wajib diisi.'; errEl.classList.remove('hidden'); return }
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...'
+  try {
+    await window._SB.signIn(email, pass)
+    // onAuthChange akan handle sisanya
+  } catch(e) {
+    errEl.textContent = e.message === 'Invalid login credentials' ? 'Email atau password salah.' : e.message
+    errEl.classList.remove('hidden')
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk'
+  }
+}
+
+async function doRegister() {
+  const username = document.getElementById('auth-reg-user').value.trim()
+  const email    = document.getElementById('auth-reg-email').value.trim()
+  const pass     = document.getElementById('auth-reg-pass').value
+  const errEl    = document.getElementById('auth-reg-err')
+  const btn      = document.getElementById('btn-register')
+  errEl.classList.add('hidden')
+  if (!username || !email || !pass) { errEl.textContent = 'Semua field wajib diisi.'; errEl.classList.remove('hidden'); return }
+  if (pass.length < 6) { errEl.textContent = 'Password minimal 6 karakter.'; errEl.classList.remove('hidden'); return }
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mendaftar...'
+  try {
+    // ✅ FIXED: Handle both return structures (with or without destructure)
+    const result = await window._SB.signUp(email, pass, username)
+    const user = result?.user ?? result  // Fallback jika structure berbeda
+    
+    if (user && !user.email_confirmed_at && user.confirmed_at === null) {
+      toast('✅ Cek email kamu untuk konfirmasi akun!')
+      closeAuthModal()
+    }
+    // Kalau email confirm disabled di Supabase, onAuthChange langsung handle
+  } catch(e) {
+    errEl.textContent = e.message || 'Terjadi kesalahan saat mendaftar'
+    errEl.classList.remove('hidden')
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-plus"></i> Buat Akun'
+  }
+}
+
+async function logout() {
+  if (!CURRENT_USER) return
+  try {
+    await window._SB.signOut()
+    toast('👋 Berhasil keluar')
+  } catch(e) {
+    toast('⚠️ Gagal logout: ' + e.message)
+  }
 }
  
 async function seedDataSupabase() {
@@ -166,6 +390,12 @@ let tempFiles = { main:null, thumb:null, linkIcon:null };
 // NAVIGATION
 // ============================
 function navigateTo(pageId) {
+  // Auth guard untuk halaman tertentu
+  if (AUTH_REQUIRED_PAGES.includes(pageId) && !CURRENT_USER) {
+    openAuthModal()
+    toast('⚠️ Login dulu untuk mengakses halaman ini')
+    return
+  }
   document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
   const target = document.getElementById('page-'+pageId);
   if (target) target.classList.add('active');
@@ -480,6 +710,8 @@ function renderAnalyst() {
 }
  
 function renderProfil() {
+  // Profil butuh login — sudah diblock di navigateTo, tapi double check
+  if (!CURRENT_USER) { openAuthModal(); return }
   const profile = DB.get('user_profile') || {};
   const contents = DB.getArr('contents');
   const discussions = DB.getArr('discussions');
@@ -593,6 +825,7 @@ function renderPengaturan() {
 // ACTIONS
 // ============================
 async function toggleBookmark(contentId) {
+  if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk menyimpan konten'); return }
   const saved = await window._SB.toggleSave(CURRENT_USER.id, contentId, 'content')
   const contents = DB.getArr('contents')
   const idx = contents.findIndex(c => c.id === contentId)
@@ -1111,12 +1344,14 @@ function clearAllData() {
 // MODAL HELPERS
 // ============================
 function openUploadModal() {
+  if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk upload konten'); return }
   populateCategorySelects();
   tempFiles = {main:null, thumb:null, linkIcon:null};
   openModal('modal-upload');
 }
  
 function openLinkModal() {
+  if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk menambah link'); return }
   populateCategorySelects();
   tempFiles = {main:null, thumb:null, linkIcon:null};
   // Reset icon preview
@@ -1125,7 +1360,10 @@ function openLinkModal() {
   openModal('modal-link');
 }
  
-function openPostModal() { openModal('modal-post'); }
+function openPostModal() {
+  if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk posting diskusi'); return }
+  openModal('modal-post');
+}
 function openProjectModal() { openModal('modal-project'); }
  
 function openEditProfil() {

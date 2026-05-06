@@ -90,6 +90,47 @@ async function addRef(userId, ref) {
   return data
 }
 
+// ============================
+// AUTH FUNCTIONS
+// ============================
+async function signUp(email, password, username) {
+  const { data, error } = await supabase.auth.signUp({
+    email, password,
+    options: { data: { username } }
+  })
+  if (error) throw error
+  // Buat profil awal di tabel users
+  if (data.user) {
+    try {
+      await supabase.from('users').upsert({
+        id: data.user.id,
+        username: username || email.split('@')[0],
+        email: email,
+        created_at: new Date().toISOString()
+      })
+    } catch(e) { /* profil sudah ada */ }
+  }
+  // ✅ FIX: Return object dengan struktur yang sesuai
+  return { user: data.user, session: data.session }
+}
+
+async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  return data
+}
+
+async function signOut() {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}
+
+function onAuthChange(callback) {
+  return supabase.auth.onAuthStateChange((event, session) => {
+    callback(event, session?.user ?? null)
+  })
+}
+
 // Expose semua ke window agar bisa dipakai script biasa
 window._SB = {
   getCurrentUser, getProfile, updateProfile,
@@ -98,7 +139,9 @@ window._SB = {
   uploadContentFile, uploadThumbnail,
   getPosts, addPost,
   getSaves, toggleSave,
-  addRef
+  addRef,
+  // Auth
+  signUp, signIn, signOut, onAuthChange
 }
 
 // Tandai siap, lalu trigger init jika sudah ada
