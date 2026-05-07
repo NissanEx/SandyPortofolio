@@ -54,6 +54,8 @@ const DB = {
       const mapped = data.map(c => ({
         id: c.id, userId: c.user_id, categoryId: c.category_id,
         title: c.name, description: c.description,
+        authorName: c.users?.username || CURRENT_PROFILE?.username || '',
+        authorAvatar: c.users?.avatar_url || CURRENT_PROFILE?.avatar_url || '',
         fileType: c.icon_type || 'doc', thumbUrl: c.preview_image || '',
         fileData: c.file_url || null, fileName: c.file_name || null, fileSize: c.file_size || null,
         webUrl: c.display_url || null,
@@ -71,6 +73,7 @@ const DB = {
       const mapped = data.map(p => ({
         id: p.id, userId: p.user_id,
         userName: p.users?.username || 'Pengguna',
+        userAvatar: p.users?.avatar_url || '',
         content: p.content, likes: p.likes_count || 0, comments: p.comments_count || 0, shares: p.shares_count || 0,
         createdAt: p.created_at
       }))
@@ -497,6 +500,10 @@ function contentCard(c) {
       </div>
       <div class="content-info">
         <h3 title="${c.title}">${c.title}</h3>
+        <div class="flex items-center gap-1.5 mt-1">
+          ${avatarEl(c.authorName, c.authorAvatar, 'w-4 h-4', 'rounded-full')}
+          <span class="text-xs text-gray-400 truncate">${c.authorName || 'Unknown'}</span>
+        </div>
         <p>${c.views} views · ${c.likes} suka</p>
       </div>
     </div>
@@ -613,7 +620,7 @@ function renderDiskusi() {
   list.innerHTML = posts.map(p => `
     <div class="post-item">
       <div class="flex gap-4 mb-3">
-        <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">${p.userName[0]}</div>
+        ${avatarEl(p.userName, p.userAvatar)}
         <div class="flex-1">
           <p class="font-bold text-black">${p.userName}</p>
           <p class="text-xs text-gray-400">${timeAgo(p.createdAt)}</p>
@@ -734,7 +741,7 @@ function renderProfil() {
     actEl.innerHTML = allDisc.map(d => `
       <div class="post-item">
         <div class="flex gap-4 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">${(profile.name||'S')[0]}</div>
+          ${avatarEl(profile.name || 'S', profile.avatarUrl)}
           <div>
             <p class="font-bold text-black">${profile.name||'San Pelong'}</p>
             <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
@@ -1158,8 +1165,10 @@ async function submitUpload() {
   });
  
   DB.pushArr('contents', {
-    id: content.id, userId: CURRENT_USER.id, categoryId: catId,
+    id: content.id, userId: CURRENT_PROFILE.id, categoryId: catId,
     title, description: desc, fileType,
+    authorName: CURRENT_PROFILE?.username || '',
+    authorAvatar: CURRENT_PROFILE?.avatar_url || '',
     fileData: fileUrl, thumbUrl: thumbUrl || '',
     views: 0, likes: 0, bookmarked: false,
     createdAt: content.created_at
@@ -1340,7 +1349,13 @@ function openLinkModal() {
  
 function openPostModal() {
   if (!CURRENT_USER) { openAuthModal(); toast('⚠️ Login dulu untuk posting diskusi'); return }
-  openModal('modal-post');
+  openModal('modal-post')
+  // Inject avatar user yang login ke modal
+  const el = document.getElementById('modal-post-avatar')
+  if (el && CURRENT_PROFILE) {
+    el.outerHTML = avatarEl(CURRENT_PROFILE.username, CURRENT_PROFILE.avatar_url)
+      .replace('class="', 'id="modal-post-avatar" class="')
+  }
 }
 function openProjectModal() { openModal('modal-project'); }
  
@@ -1398,6 +1413,15 @@ function formatSize(bytes) {
   return (bytes / 1048576).toFixed(1) + 'MB';
 }
  
+// Helper: render avatar HTML (foto atau inisial)
+function avatarEl(name, avatarUrl, size = 'w-10 h-10', rounded = 'rounded-xl') {
+  const initial = (name || 'U')[0].toUpperCase()
+  if (avatarUrl) {
+    return `<img src="${avatarUrl}" class="${size} ${rounded} object-cover flex-shrink-0" onerror="this.outerHTML='<div class=\\'${size} ${rounded} bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm\\'>${initial}</div>'">`
+  }
+  return `<div class="${size} ${rounded} bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">${initial}</div>`
+}
+
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
   if (diff < 60) return 'Baru saja';

@@ -45,7 +45,7 @@ async function getCategories(userId) {
   return data
 }
 async function getContents(userId) {
-  const { data, error } = await supabase.from('contents').select('*, categories(title)').eq('user_id', userId).order('created_at', { ascending: false })
+  const { data, error } = await supabase.from('contents').select('*, categories(title), users(username, avatar_url)').eq('user_id', userId).order('created_at', { ascending: false })
   if (error) throw error
   return data
 }
@@ -153,13 +153,6 @@ async function updateCategoryIcon(categoryId, iconUrl) {
   return data
 }
 
-// Export ke window._SB
-window._SB = {
-  // ... existing exports
-  uploadCategoryIcon,
-  updateCategoryIcon,
-}
-
 // Expose semua ke window agar bisa dipakai script biasa
 window._SB = {
   getCurrentUser, getProfile, updateProfile,
@@ -169,6 +162,7 @@ window._SB = {
   getPosts, addPost,
   getSaves, toggleSave,
   addRef,
+  uploadCategoryIcon, updateCategoryIcon,
   // Auth
   signUp, signIn, signOut, onAuthChange
 }

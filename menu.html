@@ -11,16 +11,7 @@
 
 
 <!-- ===== SUPABASE — module script, expose ke window ===== -->
-<script type="module" src="supabase.js"></script>
-<style>
-  /* Auth modal tab active */
-  .active-tab {
-    background: #000;
-    color: #fff;
-  }
-  /* Sidebar user info */
-  #sidebar-user-info { margin-bottom: 8px; }
-</style>
+<script type="module"src="supabase.js"></script>
 </head>
 <body class="flex min-h-screen">
  
@@ -53,8 +44,6 @@
     </button>
   </nav>
   <nav class="mt-2 px-4 space-y-1 flex-1">
-    <!-- User info / login button -->
-    <div id="sidebar-user-info" class="mb-2"></div>
       <button onclick="logout()" class="w-full flex items-center p-3 rounded-xl hover:bg-white/10 transition gap-3 text-sm text-red-400">
     <i class="fas fa-sign-out-alt w-5 text-center"></i><span>Keluar</span>
   </button>
@@ -589,7 +578,7 @@
     <button onclick="closeModal('modal-post')" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
     <h2 class="text-2xl font-bold mb-5">Buat Postingan Baru</h2>
     <div class="flex gap-4">
-      <div class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0">S</div>
+      <div id="modal-post-avatar" class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">?</div>
       <textarea id="post-content" class="form-input flex-1" rows="4" placeholder="Bagikan pemikiranmu..."></textarea>
     </div>
     <div class="flex gap-3 mt-4">
