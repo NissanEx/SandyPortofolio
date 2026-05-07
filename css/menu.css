@@ -11,6 +11,12 @@
   /* Upload tabs */
   .upload-tab { cursor:pointer; padding:8px 20px; border-radius:10px; font-weight:600; font-size:13px; transition:all .2s; color:#888; border:1.5px solid transparent; }
   .upload-tab.active { background:#000; color:#fff; }
+  
+  .tab-profil.active {
+  border-bottom-width: 2px;
+  border-color: black;
+  color: black;
+}
 
   /* Upload drag zone */
   .drop-zone { border:2px dashed #ccc; border-radius:16px; padding:32px 16px; text-align:center; cursor:pointer; transition:all .2s; }

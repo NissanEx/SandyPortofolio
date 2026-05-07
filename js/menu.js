@@ -152,31 +152,36 @@ function requireAuth(action) {
 }
 
 function updateSidebarUser() {
-  const el = document.getElementById('sidebar-user-info')
-  if (!el) return
+  const el = document.getElementById('sidebar-user-info');
+  if (!el) return;
+
   if (CURRENT_USER && CURRENT_PROFILE) {
-    const initial = (CURRENT_PROFILE.username || CURRENT_USER.email || 'U')[0].toUpperCase()
+    const initial = (CURRENT_PROFILE.username || CURRENT_USER.email || 'U')[0].toUpperCase();
     const avatarHtml = CURRENT_PROFILE.avatar_url
-      ? `<img src="${CURRENT_PROFILE.avatar_url}" class="w-9 h-9 rounded-xl object-cover">`
-      : `<div class="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-bold text-sm">${initial}</div>`
+      ? `<img src="${CURRENT_PROFILE.avatar_url}" class="w-10 h-10 rounded-xl object-cover">`
+      : `<div class="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center font-bold text-base">${initial}</div>`;
+
     el.innerHTML = `
-      <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10">
+      <button onclick="navigateTo('profil')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition">
         ${avatarHtml}
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-bold truncate">${CURRENT_PROFILE.username || 'User'}</p>
+        <div class="flex-1 text-left">
+          <p class="text-sm font-bold truncate text-white">${CURRENT_PROFILE.username || 'User'}</p>
           <p class="text-xs text-gray-400 truncate">${CURRENT_USER.email}</p>
         </div>
-      </div>
-    `
+      </button>
+    `;
   } else {
     el.innerHTML = `
-      <button onclick="openAuthModal()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm">
-        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-          <i class="fas fa-user text-gray-400"></i>
+      <button onclick="openAuthModal()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+          <i class="fas fa-user text-gray-400 text-lg"></i>
         </div>
-        <span class="text-gray-300">Login / Daftar</span>
+        <div class="flex-1 text-left">
+          <p class="text-sm font-bold text-white">Login / Daftar</p>
+          <p class="text-xs text-gray-400">Akses semua fitur</p>
+        </div>
       </button>
-    `
+    `;
   }
 }
 
@@ -696,25 +701,27 @@ function renderAnalyst() {
 }
  
 function renderProfil() {
-  if (!CURRENT_USER) { openAuthModal(); return }
+  if (!CURRENT_USER) { openAuthModal(); return; }
   const profile = DB.get('user_profile') || {};
-  const contents = DB.getArr('contents');
-  const discussions = DB.getArr('discussions');
- 
-  document.getElementById('profil-name').textContent = profile.name || 'San Pelong';
-  document.getElementById('profil-username').textContent = '@'+(profile.username||'sanpelong');
+  const myContents = DB.getArr('contents').filter(c => c.userId === CURRENT_USER.id);
+  const myDiscussions = DB.getArr('discussions').filter(d => d.userId === CURRENT_USER.id);
+
+  // Isi data statis profil
+  document.getElementById('profil-name').textContent = profile.name || 'Pengguna';
+  document.getElementById('profil-username').textContent = '@' + (profile.username || CURRENT_USER.email.split('@')[0]);
   document.getElementById('profil-bio').textContent = profile.bio || '';
   document.getElementById('info-location').textContent = profile.location || '';
   document.getElementById('info-occupation').textContent = profile.occupation || '';
   document.getElementById('info-techstack').textContent = profile.techStack || '';
   document.getElementById('info-interests').textContent = profile.interests || '';
- 
+
+  // Avatar & cover
   if (profile.avatarUrl) {
     document.getElementById('avatar-img').src = profile.avatarUrl;
     document.getElementById('avatar-img').classList.remove('hidden');
     document.getElementById('avatar-initial').classList.add('hidden');
   } else {
-    document.getElementById('avatar-initial').textContent = (profile.name||'S')[0].toUpperCase();
+    document.getElementById('avatar-initial').textContent = (profile.name || 'U')[0].toUpperCase();
     document.getElementById('avatar-img').classList.add('hidden');
     document.getElementById('avatar-initial').classList.remove('hidden');
   }
@@ -723,40 +730,90 @@ function renderProfil() {
     coverImg.src = profile.coverUrl;
     coverImg.classList.remove('hidden');
   }
- 
+
+  // Statistik
   document.getElementById('stat-followers').textContent = profile.followers || 0;
   document.getElementById('stat-following').textContent = profile.following || 0;
-  document.getElementById('stat-posts').textContent = contents.length;
-  document.getElementById('stat-likes-total').textContent = contents.reduce((a,c)=>a+c.likes,0);
-  document.getElementById('stat-comments').textContent = discussions.reduce((a,d)=>a+d.comments,0);
-  document.getElementById('stat-shares').textContent = discussions.reduce((a,d)=>a+d.shares,0);
- 
+  document.getElementById('stat-posts').textContent = myContents.length + myDiscussions.length;
+  document.getElementById('stat-likes-total').textContent = myContents.reduce((a,c)=>a+c.likes,0) + myDiscussions.reduce((a,d)=>a+d.likes,0);
+  document.getElementById('stat-comments').textContent = myDiscussions.reduce((a,d)=>a+d.comments,0);
+  document.getElementById('stat-shares').textContent = myDiscussions.reduce((a,d)=>a+d.shares,0);
+
   renderRecentUploads();
- 
-  const actEl = document.getElementById('profil-activity');
-  const allDisc = DB.getArr('discussions').filter(d=>d.userId===CURRENT_USER?.id);
-  if (!allDisc.length) {
-    actEl.innerHTML = `<p class="text-gray-400 text-sm py-6 text-center">Belum ada aktivitas.</p>`;
-  } else {
-    actEl.innerHTML = allDisc.map(d => `
-      <div class="post-item">
-        <div class="flex gap-4 mb-3">
-          ${avatarEl(profile.name || 'S', profile.avatarUrl)}
-          <div>
-            <p class="font-bold text-black">${profile.name||'San Pelong'}</p>
-            <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
+
+  // Buat tab HTML jika belum ada
+  let tabContainer = document.getElementById('profil-tabs');
+  if (!tabContainer) {
+    const activitySection = document.querySelector('#page-profil .bg-white.rounded-\\[2rem\\].shadow-xl:last-child');
+    if (activitySection) {
+      activitySection.insertAdjacentHTML('afterbegin', `
+        <div id="profil-tabs" class="flex gap-3 mb-6 border-b border-gray-100">
+          <button onclick="switchProfilTab('contents')" id="tab-contents-btn" class="tab-profil active pb-2 px-1 font-bold text-black border-b-2 border-black">Konten Saya</button>
+          <button onclick="switchProfilTab('discussions')" id="tab-discussions-btn" class="tab-profil pb-2 px-1 font-bold text-gray-400 hover:text-black transition">Diskusi Saya</button>
+        </div>
+        <div id="profil-tab-contents"></div>
+        <div id="profil-tab-discussions" class="hidden"></div>
+      `);
+    }
+  }
+
+  // Isi tab konten
+  const contentsHtml = myContents.length
+    ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">${myContents.map(c => contentCard(c)).join('')}</div>`
+    : `<p class="text-gray-400 text-center py-8">Belum ada konten yang diupload. <button onclick="openUploadModal()" class="text-black underline font-bold">Upload sekarang</button></p>`;
+  document.getElementById('profil-tab-contents').innerHTML = contentsHtml;
+
+  // Isi tab diskusi
+  const discHtml = myDiscussions.length
+    ? myDiscussions.map(d => `
+        <div class="post-item">
+          <div class="flex gap-4 mb-3">
+            ${avatarEl(profile.name || 'S', profile.avatarUrl)}
+            <div>
+              <p class="font-bold text-black">${profile.name || 'Pengguna'}</p>
+              <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
+            </div>
+          </div>
+          <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14">${d.content}</p>
+          <div class="flex gap-4 text-sm text-gray-500 pl-14">
+            <span><i class="fas fa-heart mr-1"></i>${d.likes}</span>
+            <span><i class="fas fa-comment mr-1"></i>${d.comments}</span>
+            <span><i class="fas fa-share mr-1"></i>${d.shares}</span>
           </div>
         </div>
-        <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14">${d.content}</p>
-        <div class="flex gap-4 text-sm text-gray-500 pl-14">
-          <span><i class="fas fa-heart mr-1"></i>${d.likes}</span>
-          <span><i class="fas fa-comment mr-1"></i>${d.comments}</span>
-          <span><i class="fas fa-share mr-1"></i>${d.shares}</span>
-        </div>
-      </div>
-    `).join('');
-  }
+      `).join('')
+    : `<p class="text-gray-400 text-center py-8">Belum ada diskusi. <button onclick="openPostModal()" class="text-black underline font-bold">Buat postingan</button></p>`;
+  document.getElementById('profil-tab-discussions').innerHTML = discHtml;
+
+  // Default tampilkan tab konten
+  switchProfilTab('contents');
 }
+
+// Fungsi untuk switch tab di profil
+window.switchProfilTab = function(tab) {
+  const btnContents = document.getElementById('tab-contents-btn');
+  const btnDiscussions = document.getElementById('tab-discussions-btn');
+  const divContents = document.getElementById('profil-tab-contents');
+  const divDiscussions = document.getElementById('profil-tab-discussions');
+
+  if (!btnContents || !divContents) return;
+
+  if (tab === 'contents') {
+    btnContents.classList.add('active', 'border-black', 'text-black');
+    btnContents.classList.remove('text-gray-400', 'border-transparent');
+    btnDiscussions.classList.remove('active', 'border-black', 'text-black');
+    btnDiscussions.classList.add('text-gray-400', 'border-transparent');
+    divContents.classList.remove('hidden');
+    divDiscussions.classList.add('hidden');
+  } else {
+    btnDiscussions.classList.add('active', 'border-black', 'text-black');
+    btnDiscussions.classList.remove('text-gray-400', 'border-transparent');
+    btnContents.classList.remove('active', 'border-black', 'text-black');
+    btnContents.classList.add('text-gray-400', 'border-transparent');
+    divDiscussions.classList.remove('hidden');
+    divContents.classList.add('hidden');
+  }
+};
  
 function renderRecentUploads() {
   const contents = DB.getArr('contents').slice(0,3);
