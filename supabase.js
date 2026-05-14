@@ -99,6 +99,36 @@ async function addRef(userId, ref) {
   return data
 }
 
+async function updatePost(postId, updates) {
+  const { data, error } = await supabase
+    .from('posts')
+    .update(updates)
+    .eq('id', postId)
+    .select().single()
+  if (error) throw error
+  return data
+}
+
+async function deletePost(postId) {
+  const { error } = await supabase.from('posts').delete().eq('id', postId)
+  if (error) throw error
+}
+
+async function updateContent(contentId, updates) {
+  const { data, error } = await supabase
+    .from('contents')
+    .update(updates)
+    .eq('id', contentId)
+    .select().single()
+  if (error) throw error
+  return data
+}
+
+async function deleteContent(contentId) {
+  const { error } = await supabase.from('contents').delete().eq('id', contentId)
+  if (error) throw error
+}
+
 async function signUp(email, password, username) {
   const { data, error } = await supabase.auth.signUp({
     email, password,
@@ -157,12 +187,13 @@ async function updateCategoryIcon(categoryId, iconUrl) {
 window._SB = {
   getCurrentUser, getProfile, updateProfile,
   uploadAvatarFile, uploadCoverFile,
-  getCategories, getContents, addContent,
+  getCategories, getContents, addContent, updateContent, deleteContent,
   uploadContentFile, uploadThumbnail,
-  getPosts, addPost,
+  getPosts, addPost, updatePost, deletePost,
   getSaves, toggleSave,
   addRef,
   uploadCategoryIcon, updateCategoryIcon,
+  supabase,
   // Auth
   signUp, signIn, signOut, onAuthChange
 }

@@ -753,42 +753,140 @@ function renderProfil() {
   document.getElementById('stat-shares').textContent = discussions.reduce((a,d)=>a+d.shares,0);
  
   renderRecentUploads();
- 
-  const actEl = document.getElementById('profil-activity');
-  const allDisc = DB.getArr('discussions').filter(d=>d.userId===CURRENT_USER?.id);
-  if (!allDisc.length) {
-    actEl.innerHTML = `<p class="text-gray-400 text-sm py-6 text-center">Belum ada aktivitas.</p>`;
-  } else {
-    actEl.innerHTML = allDisc.map(d => `
-      <div class="post-item" id="post-${d.id}">
-        <div class="flex gap-4 mb-3">
-          ${avatarEl(profile.name || 'S', profile.avatarUrl)}
-          <div class="flex-1">
-            <p class="font-bold text-black">${profile.name||'San Pelong'}</p>
-            <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
+  renderProfilKonten();
+  renderProfilDiskusi();
+}
+
+// Render grid konten milik user di halaman profil
+function renderProfilKonten() {
+  const grid = document.getElementById('profil-konten-grid');
+  if (!grid) return;
+  const myContents = DB.getArr('contents').filter(c => c.userId === CURRENT_USER?.id || !c.userId);
+  // Fallback: tampilkan semua kalau userId belum ter-set (data lama)
+  const displayContents = myContents.length > 0 ? myContents : DB.getArr('contents');
+
+  if (!displayContents.length) {
+    grid.innerHTML = `
+      <div class="col-span-4 text-center py-16 text-gray-400">
+        <i class="fas fa-cloud-upload-alt text-5xl mb-4 block text-gray-200"></i>
+        <p class="font-bold text-lg">Belum ada konten</p>
+        <p class="text-sm mt-1">Upload konten pertamamu!</p>
+        <button onclick="openUploadModal()" class="mt-4 bg-black text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-zinc-800 transition">
+          <i class="fas fa-upload mr-2"></i>Upload Sekarang
+        </button>
+      </div>`;
+    return;
+  }
+
+  const fileIconsMap = {image:'fas fa-image',video:'fas fa-video',pdf:'fas fa-file-pdf',doc:'fas fa-file-word',docx:'fas fa-file-word'};
+  grid.innerHTML = displayContents.map(c => {
+    const icon = fileIconsMap[c.fileType] || 'fas fa-file';
+    return `
+      <div class="group relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition bg-white">
+        <!-- Thumbnail -->
+        <div class="aspect-[4/3] bg-zinc-100 relative overflow-hidden cursor-pointer" onclick="showContentDetail('${c.id}')">
+          ${c.thumbUrl
+            ? `<img src="${c.thumbUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
+            : `<div class="w-full h-full flex items-center justify-center"><i class="${icon} text-4xl text-gray-300"></i></div>`}
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center">
+            <i class="fas fa-eye text-white opacity-0 group-hover:opacity-100 transition text-2xl"></i>
           </div>
-          <div class="relative" id="menu-wrap-${d.id}">
-            <button onclick="togglePostMenu('${d.id}')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition">
-              <i class="fas fa-ellipsis-h"></i>
-            </button>
-            <div id="post-menu-${d.id}" class="hidden absolute right-0 top-9 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 min-w-[140px]">
-              <button onclick="openEditPost('${d.id}');togglePostMenu('${d.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-black font-medium">
-                <i class="fas fa-pen w-4 text-center text-blue-500"></i> Edit Post
+          <!-- 3-dot menu -->
+          <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition" onclick="event.stopPropagation()">
+            <div class="relative" id="content-menu-wrap-${c.id}">
+              <button onclick="toggleContentMenu('${c.id}')"
+                class="w-8 h-8 rounded-full bg-black/60 hover:bg-black flex items-center justify-center text-white text-xs">
+                <i class="fas fa-ellipsis-v"></i>
               </button>
-              <button onclick="deletePost('${d.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-500 font-medium">
-                <i class="fas fa-trash w-4 text-center"></i> Hapus
-              </button>
+              <div id="content-menu-${c.id}" class="hidden absolute right-0 top-9 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 min-w-[150px]">
+                <button onclick="openEditKonten('${c.id}');toggleContentMenu('${c.id}')"
+                  class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-black font-medium">
+                  <i class="fas fa-pen w-4 text-center text-blue-500"></i> Edit Konten
+                </button>
+                <button onclick="deleteKonten('${c.id}')"
+                  class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-500 font-medium">
+                  <i class="fas fa-trash w-4 text-center"></i> Hapus
+                </button>
+              </div>
             </div>
           </div>
         </div>
-        <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14" id="post-content-${d.id}">${d.content}</p>
-        <div class="flex gap-4 text-sm text-gray-500 pl-14">
-          <span><i class="fas fa-heart mr-1"></i>${d.likes}</span>
-          <span><i class="fas fa-comment mr-1"></i>${d.comments}</span>
-          <span><i class="fas fa-share mr-1"></i>${d.shares}</span>
+        <!-- Info -->
+        <div class="p-3">
+          <h3 class="font-bold text-black text-sm truncate mb-1" title="${c.title}">${c.title}</h3>
+          <p class="text-xs text-gray-400 truncate mb-2">${c.description || 'Tidak ada deskripsi'}</p>
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span><i class="fas fa-eye mr-1"></i>${c.views}</span>
+            <span><i class="fas fa-heart mr-1 text-red-400"></i>${c.likes}</span>
+            <span class="uppercase bg-gray-100 px-2 py-0.5 rounded-full font-medium">${c.fileType||'file'}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Render diskusi milik user di halaman profil
+function renderProfilDiskusi() {
+  const actEl = document.getElementById('profil-activity');
+  if (!actEl) return;
+  const profile = DB.get('user_profile') || {};
+  const allDisc = DB.getArr('discussions').filter(d => d.userId === CURRENT_USER?.id);
+  if (!allDisc.length) {
+    actEl.innerHTML = `<p class="text-gray-400 text-sm py-6 text-center">Belum ada diskusi.</p>`;
+    return;
+  }
+  actEl.innerHTML = allDisc.map(d => `
+    <div class="post-item" id="post-${d.id}">
+      <div class="flex gap-4 mb-3">
+        ${avatarEl(profile.name || 'S', profile.avatarUrl)}
+        <div class="flex-1">
+          <p class="font-bold text-black">${profile.name||'San Pelong'}</p>
+          <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
+        </div>
+        <div class="relative" id="menu-wrap-${d.id}">
+          <button onclick="togglePostMenu('${d.id}')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition">
+            <i class="fas fa-ellipsis-h"></i>
+          </button>
+          <div id="post-menu-${d.id}" class="hidden absolute right-0 top-9 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 min-w-[140px]">
+            <button onclick="openEditPost('${d.id}');togglePostMenu('${d.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-black font-medium">
+              <i class="fas fa-pen w-4 text-center text-blue-500"></i> Edit Post
+            </button>
+            <button onclick="deletePost('${d.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-500 font-medium">
+              <i class="fas fa-trash w-4 text-center"></i> Hapus
+            </button>
+          </div>
         </div>
       </div>
-    `).join('');
+      <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14" id="post-content-${d.id}">${d.content}</p>
+      <div class="flex gap-4 text-sm text-gray-500 pl-14">
+        <span><i class="fas fa-heart mr-1"></i>${d.likes}</span>
+        <span><i class="fas fa-comment mr-1"></i>${d.comments}</span>
+        <span><i class="fas fa-share mr-1"></i>${d.shares}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Tab switcher profil
+function switchProfilTab(tab) {
+  const kontenPanel = document.getElementById('profil-panel-konten');
+  const diskusiPanel = document.getElementById('profil-panel-diskusi');
+  const kontenBtn = document.getElementById('profil-tab-konten');
+  const diskusiBtn = document.getElementById('profil-tab-diskusi');
+  if (tab === 'konten') {
+    kontenPanel.classList.remove('hidden');
+    diskusiPanel.classList.add('hidden');
+    kontenBtn.classList.add('text-black', 'border-black');
+    kontenBtn.classList.remove('text-gray-400', 'border-transparent');
+    diskusiBtn.classList.remove('text-black', 'border-black');
+    diskusiBtn.classList.add('text-gray-400', 'border-transparent');
+  } else {
+    diskusiPanel.classList.remove('hidden');
+    kontenPanel.classList.add('hidden');
+    diskusiBtn.classList.add('text-black', 'border-black');
+    diskusiBtn.classList.remove('text-gray-400', 'border-transparent');
+    kontenBtn.classList.remove('text-black', 'border-black');
+    kontenBtn.classList.add('text-gray-400', 'border-transparent');
   }
 }
  
@@ -952,12 +1050,10 @@ async function saveEditPost() {
 async function deletePost(postId) {
   if (!confirm('Yakin hapus postingan ini?')) return;
 
-  // Hapus dari Supabase
   try {
     await window._SB.deletePost(postId);
   } catch(e) { /* fallback */ }
 
-  // Hapus dari localStorage
   const posts = DB.getArr('discussions').filter(p => p.id !== postId);
   DB.set('discussions', posts);
 
@@ -966,6 +1062,92 @@ async function deletePost(postId) {
   const page = getCurrentPage();
   if (page === 'diskusi') renderDiskusi();
   else if (page === 'profil') renderProfil();
+}
+
+// ============================
+// KONTEN EDIT / DELETE (di halaman Profil)
+// ============================
+function toggleContentMenu(contentId) {
+  const menu = document.getElementById('content-menu-' + contentId);
+  if (!menu) return;
+  const isHidden = menu.classList.contains('hidden');
+  document.querySelectorAll('[id^="content-menu-"]').forEach(m => m.classList.add('hidden'));
+  if (isHidden) {
+    menu.classList.remove('hidden');
+    setTimeout(() => {
+      document.addEventListener('click', function handler(e) {
+        if (!menu.contains(e.target)) {
+          menu.classList.add('hidden');
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 50);
+  }
+}
+
+function openEditKonten(contentId) {
+  const contents = DB.getArr('contents');
+  const c = contents.find(c => c.id === contentId);
+  if (!c) return;
+
+  populateCategorySelects();
+  document.getElementById('edit-konten-id').value = contentId;
+  document.getElementById('edit-konten-title').value = c.title || '';
+  document.getElementById('edit-konten-desc').value = c.description || '';
+  document.getElementById('edit-konten-url').value = c.webUrl || '';
+
+  // Set kategori
+  const catSel = document.getElementById('edit-konten-category');
+  if (catSel && c.categoryId) catSel.value = c.categoryId;
+
+  openModal('modal-edit-konten');
+}
+
+async function saveEditKonten() {
+  const contentId = document.getElementById('edit-konten-id').value;
+  const title = document.getElementById('edit-konten-title').value.trim();
+  if (!title) { toast('⚠️ Judul tidak boleh kosong'); return; }
+
+  const updates = {
+    name: title,
+    description: document.getElementById('edit-konten-desc').value.trim(),
+    category_id: document.getElementById('edit-konten-category').value || null,
+    display_url: document.getElementById('edit-konten-url').value.trim() || null,
+  };
+
+  try {
+    await window._SB.updateContent(contentId, updates);
+  } catch(e) { /* fallback ke localStorage */ }
+
+  const contents = DB.getArr('contents');
+  const idx = contents.findIndex(c => c.id === contentId);
+  if (idx >= 0) {
+    contents[idx].title = title;
+    contents[idx].description = updates.description;
+    contents[idx].categoryId = updates.category_id;
+    contents[idx].webUrl = updates.display_url;
+    DB.set('contents', contents);
+  }
+
+  toast('✅ Konten berhasil diperbarui!');
+  closeModal('modal-edit-konten');
+  renderProfil();
+}
+
+async function deleteKonten(contentId) {
+  if (!confirm('Yakin hapus konten ini? Tindakan ini tidak bisa dibatalkan.')) return;
+
+  try {
+    await window._SB.deleteContent(contentId);
+  } catch(e) { /* fallback */ }
+
+  const contents = DB.getArr('contents').filter(c => c.id !== contentId);
+  DB.set('contents', contents);
+
+  toast('🗑️ Konten dihapus');
+  renderProfil();
+  // Update stat di halaman lain juga
+  renderBeranda();
 }
  
 function showContentDetail(id) {

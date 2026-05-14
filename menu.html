@@ -379,10 +379,27 @@
       </div>
     </div>
  
-    <!-- Posts / Activity -->
+    <!-- Posts / Activity — TAB: Konten & Diskusi -->
     <div class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8">
-      <h2 class="text-2xl font-bold text-black mb-8">Aktivitas Terbaru</h2>
-      <div id="profil-activity" class="space-y-0"></div>
+      <!-- Tab header -->
+      <div class="flex items-center gap-6 mb-8 border-b border-gray-100 pb-4">
+        <button onclick="switchProfilTab('konten')" id="profil-tab-konten"
+          class="profil-tab-btn active text-lg font-bold text-black border-b-2 border-black pb-3 -mb-[1.05rem] transition">
+          <i class="fas fa-th-large mr-2 text-sm"></i>Konten
+        </button>
+        <button onclick="switchProfilTab('diskusi')" id="profil-tab-diskusi"
+          class="profil-tab-btn text-lg font-bold text-gray-400 border-b-2 border-transparent pb-3 -mb-[1.05rem] hover:text-black transition">
+          <i class="fas fa-comments mr-2 text-sm"></i>Diskusi
+        </button>
+      </div>
+      <!-- Panel: Konten -->
+      <div id="profil-panel-konten">
+        <div id="profil-konten-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
+      </div>
+      <!-- Panel: Diskusi -->
+      <div id="profil-panel-diskusi" class="hidden">
+        <div id="profil-activity" class="space-y-0"></div>
+      </div>
     </div>
   </div>
  
@@ -679,6 +696,45 @@
     </div>
   </div>
 </div>
+<!-- ===== MODAL: EDIT KONTEN ===== -->
+<div id="modal-edit-konten" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-edit-konten')">
+  <div class="modal-box">
+    <button onclick="closeModal('modal-edit-konten')" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
+    <h2 class="text-2xl font-bold mb-1">Edit Konten</h2>
+    <p class="text-sm text-gray-400 mb-6">Perbarui informasi konten</p>
+    <input type="hidden" id="edit-konten-id">
+    <div class="space-y-4">
+      <div>
+        <label class="form-label">Judul Konten *</label>
+        <input id="edit-konten-title" type="text" class="form-input" placeholder="Judul konten...">
+      </div>
+      <div>
+        <label class="form-label">Kategori</label>
+        <select id="edit-konten-category" class="form-input">
+          <option value="">Pilih kategori...</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Deskripsi</label>
+        <textarea id="edit-konten-desc" class="form-input" rows="3" placeholder="Deskripsi singkat..."></textarea>
+      </div>
+      <div>
+        <label class="form-label">URL Web <span class="text-gray-400 font-normal normal-case">(opsional)</span></label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-link text-sm"></i></span>
+          <input id="edit-konten-url" type="url" class="form-input pl-9" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeModal('modal-edit-konten')" class="flex-1 border-2 border-gray-200 py-3 rounded-xl font-bold hover:bg-gray-50 transition">Batal</button>
+      <button onclick="saveEditKonten()" class="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition">
+        <i class="fas fa-save mr-2"></i>Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
 <script src="js/menu.js"></script>
 </body>
 </html>
