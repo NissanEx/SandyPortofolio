@@ -106,6 +106,8 @@ async function init() {
     return
   }
 
+  _ensureSBMethods();
+
   window._SB.onAuthChange(async (event, user) => {
     if (event === 'SIGNED_IN') {
       CURRENT_USER = user
@@ -617,16 +619,32 @@ function renderDiskusi() {
   const empty = document.getElementById('diskusi-empty');
   if (!posts.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  list.innerHTML = posts.map(p => `
-    <div class="post-item">
+  list.innerHTML = posts.map(p => {
+    const isOwner = CURRENT_USER && p.userId === CURRENT_USER.id;
+    return `
+    <div class="post-item" id="post-${p.id}">
       <div class="flex gap-4 mb-3">
         ${avatarEl(p.userName, p.userAvatar)}
         <div class="flex-1">
           <p class="font-bold text-black">${p.userName}</p>
           <p class="text-xs text-gray-400">${timeAgo(p.createdAt)}</p>
         </div>
+        ${isOwner ? `
+        <div class="relative" id="menu-wrap-${p.id}">
+          <button onclick="togglePostMenu('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition">
+            <i class="fas fa-ellipsis-h"></i>
+          </button>
+          <div id="post-menu-${p.id}" class="hidden absolute right-0 top-9 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 min-w-[140px]">
+            <button onclick="openEditPost('${p.id}');togglePostMenu('${p.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-black font-medium">
+              <i class="fas fa-pen w-4 text-center text-blue-500"></i> Edit Post
+            </button>
+            <button onclick="deletePost('${p.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-500 font-medium">
+              <i class="fas fa-trash w-4 text-center"></i> Hapus
+            </button>
+          </div>
+        </div>` : ''}
       </div>
-      <p class="text-gray-700 mb-4 leading-relaxed text-sm pl-14">${p.content}</p>
+      <p class="text-gray-700 mb-4 leading-relaxed text-sm pl-14" id="post-content-${p.id}">${p.content}</p>
       <div class="flex gap-4 text-sm text-gray-500 pl-14">
         <button onclick="likePost('${p.id}')" class="flex items-center gap-1.5 hover:text-red-500 transition">
           <i class="fas fa-heart"></i><span>${p.likes}</span>
@@ -639,7 +657,10 @@ function renderDiskusi() {
         </button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
+
+  // Tutup dropdown kalau klik di luar
+  document.addEventListener('click', closeAllPostMenus, { once: true });
 }
  
 function renderAnalyst() {
@@ -739,15 +760,28 @@ function renderProfil() {
     actEl.innerHTML = `<p class="text-gray-400 text-sm py-6 text-center">Belum ada aktivitas.</p>`;
   } else {
     actEl.innerHTML = allDisc.map(d => `
-      <div class="post-item">
+      <div class="post-item" id="post-${d.id}">
         <div class="flex gap-4 mb-3">
           ${avatarEl(profile.name || 'S', profile.avatarUrl)}
-          <div>
+          <div class="flex-1">
             <p class="font-bold text-black">${profile.name||'San Pelong'}</p>
             <p class="text-xs text-gray-400">${timeAgo(d.createdAt)}</p>
           </div>
+          <div class="relative" id="menu-wrap-${d.id}">
+            <button onclick="togglePostMenu('${d.id}')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition">
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <div id="post-menu-${d.id}" class="hidden absolute right-0 top-9 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 min-w-[140px]">
+              <button onclick="openEditPost('${d.id}');togglePostMenu('${d.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-black font-medium">
+                <i class="fas fa-pen w-4 text-center text-blue-500"></i> Edit Post
+              </button>
+              <button onclick="deletePost('${d.id}')" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-500 font-medium">
+                <i class="fas fa-trash w-4 text-center"></i> Hapus
+              </button>
+            </div>
+          </div>
         </div>
-        <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14">${d.content}</p>
+        <p class="text-gray-700 mb-3 leading-relaxed text-sm pl-14" id="post-content-${d.id}">${d.content}</p>
         <div class="flex gap-4 text-sm text-gray-500 pl-14">
           <span><i class="fas fa-heart mr-1"></i>${d.likes}</span>
           <span><i class="fas fa-comment mr-1"></i>${d.comments}</span>
@@ -821,6 +855,117 @@ function likePost(postId) {
   const posts = DB.getArr('discussions');
   const idx = posts.findIndex(p=>p.id===postId);
   if (idx>=0) { posts[idx].likes++; DB.set('discussions', posts); renderDiskusi(); }
+}
+
+// ============================
+// POST EDIT / DELETE
+// ============================
+function togglePostMenu(postId) {
+  const menu = document.getElementById('post-menu-' + postId);
+  if (!menu) return;
+  const isHidden = menu.classList.contains('hidden');
+  // Tutup semua menu dulu
+  document.querySelectorAll('[id^="post-menu-"]').forEach(m => m.classList.add('hidden'));
+  if (isHidden) {
+    menu.classList.remove('hidden');
+    // Satu kali klik di luar = tutup
+    setTimeout(() => {
+      document.addEventListener('click', function handler(e) {
+        if (!menu.contains(e.target) && e.target.id !== 'btn-menu-' + postId) {
+          menu.classList.add('hidden');
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 50);
+  }
+}
+
+function closeAllPostMenus() {
+  document.querySelectorAll('[id^="post-menu-"]').forEach(m => m.classList.add('hidden'));
+}
+
+function openEditPost(postId) {
+  const posts = DB.getArr('discussions');
+  const post = posts.find(p => p.id === postId);
+  if (!post) return;
+
+  // Buat modal edit inline kalau belum ada
+  let modal = document.getElementById('modal-edit-post');
+  if (!modal) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="modal-edit-post" class="modal-backdrop" onclick="closeModalBackdrop(event,'modal-edit-post')">
+        <div class="modal-box">
+          <button onclick="closeModal('modal-edit-post')" class="absolute top-4 right-4 text-gray-400 hover:text-black"><i class="fas fa-times text-lg"></i></button>
+          <h2 class="text-2xl font-bold mb-5">Edit Postingan</h2>
+          <input type="hidden" id="edit-post-id">
+          <div class="flex gap-4">
+            <div id="edit-post-avatar" class="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">?</div>
+            <textarea id="edit-post-content" class="form-input flex-1" rows="4" placeholder="Bagikan pemikiranmu..."></textarea>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button onclick="closeModal('modal-edit-post')" class="flex-1 border-2 border-gray-200 py-3 rounded-xl font-bold hover:bg-gray-50 transition">Batal</button>
+            <button onclick="saveEditPost()" class="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition"><i class="fas fa-save mr-2"></i>Simpan</button>
+          </div>
+        </div>
+      </div>
+    `);
+    modal = document.getElementById('modal-edit-post');
+  }
+
+  document.getElementById('edit-post-id').value = postId;
+  document.getElementById('edit-post-content').value = post.content;
+
+  // Update avatar di modal
+  const avatarEl2 = document.getElementById('edit-post-avatar');
+  if (avatarEl2 && CURRENT_PROFILE) {
+    avatarEl2.outerHTML = avatarEl(CURRENT_PROFILE.username, CURRENT_PROFILE.avatar_url)
+      .replace('class="', 'id="edit-post-avatar" class="');
+  }
+
+  openModal('modal-edit-post');
+}
+
+async function saveEditPost() {
+  const postId = document.getElementById('edit-post-id').value;
+  const newContent = document.getElementById('edit-post-content').value.trim();
+  if (!newContent) { toast('⚠️ Konten tidak boleh kosong'); return; }
+
+  // Update Supabase
+  try {
+    await window._SB.updatePost(postId, { content: newContent });
+  } catch(e) { /* fallback ke localStorage saja */ }
+
+  // Update localStorage
+  const posts = DB.getArr('discussions');
+  const idx = posts.findIndex(p => p.id === postId);
+  if (idx >= 0) { posts[idx].content = newContent; DB.set('discussions', posts); }
+
+  toast('✅ Post berhasil diperbarui!');
+  closeModal('modal-edit-post');
+
+  // Re-render halaman aktif
+  const page = getCurrentPage();
+  if (page === 'diskusi') renderDiskusi();
+  else if (page === 'profil') renderProfil();
+}
+
+async function deletePost(postId) {
+  if (!confirm('Yakin hapus postingan ini?')) return;
+
+  // Hapus dari Supabase
+  try {
+    await window._SB.deletePost(postId);
+  } catch(e) { /* fallback */ }
+
+  // Hapus dari localStorage
+  const posts = DB.getArr('discussions').filter(p => p.id !== postId);
+  DB.set('discussions', posts);
+
+  toast('🗑️ Postingan dihapus');
+
+  const page = getCurrentPage();
+  if (page === 'diskusi') renderDiskusi();
+  else if (page === 'profil') renderProfil();
 }
  
 function showContentDetail(id) {
@@ -1484,4 +1629,29 @@ function toggleCardDesc(cardEl) {
   }
 })();
  
+// ============================
+// SUPABASE FALLBACK SAFETY
+// Pastikan updatePost & deletePost ada; kalau belum didefinisikan di supabase.js, buat stub
+// ============================
+function _ensureSBMethods() {
+  if (!window._SB) return;
+  if (!window._SB.updatePost) {
+    window._SB.updatePost = async (postId, data) => {
+      // Stub: update via supabase jika tersedia
+      if (window._SB.supabase) {
+        const { error } = await window._SB.supabase.from('posts').update(data).eq('id', postId);
+        if (error) throw error;
+      }
+    };
+  }
+  if (!window._SB.deletePost) {
+    window._SB.deletePost = async (postId) => {
+      if (window._SB.supabase) {
+        const { error } = await window._SB.supabase.from('posts').delete().eq('id', postId);
+        if (error) throw error;
+      }
+    };
+  }
+}
+
 init();
